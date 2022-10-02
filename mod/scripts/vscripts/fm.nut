@@ -9,21 +9,6 @@ global function fm_Init
 //------------------------------------------------------------------------------
 const int NOMAX = 9999
 
-const int C_SILENT   = 1 << 0
-const int C_ADMIN    = 1 << 1
-const int C_FORCE    = 1 << 2
-const int C_ADMINARG = 1 << 3
-
-struct CommandInfo {
-    array<string> names
-    bool functionref(entity, array<string>) fn
-    int minArgs,
-    int maxArgs
-    string usage,
-    string adminUsage,
-    int flags
-}
-
 const int PS_MODIFIERS = 1 << 0
 const int PS_ALIVE     = 1 << 1
 
@@ -47,99 +32,19 @@ struct KickInfo {
     int threshold
 }
 
-struct PlayerScore {
-    entity player
-    float val
-}
-
-struct NextMapScore {
-    string map
-    int votes
-}
-
-struct CustomCommand {
-    string name
-    string text
-}
-
 struct {
-    bool debugEnabled
-
-    array<string> adminUids
-    bool adminAuthEnabled
-    string adminPassword
-    array<string> authenticatedAdmins
-    bool adminAuthUnauthChatBlock
-
-    array<CommandInfo> commands
-
-    bool welcomeEnabled
-    string welcome
-    array<string> welcomeNotes
-    array<string> welcomedPlayers
-
-    bool rulesEnabled
-    string rulesOk
-    string rulesNotOk
-
     bool kickEnabled
     bool kickSave
     float kickPercentage
     int kickMinPlayers
     table<string, KickInfo> kickTable
     array<string> kickedPlayers
-    
-    bool mapsEnabled
-    array<string> maps
-    bool nextMapEnabled
-    array<string> nextMapOnlyMaps
-    table<entity, string> nextMapVoteTable
-    bool nextMapHintEnabled
-    array<string> nextMapHintedPlayers
-    bool nextMapRepeatEnabled
-
-    bool switchEnabled
-    int switchDiff
-    int switchLimit
-    bool switchKill
-    table<string, int> switchCountTable
-
-    bool balanceEnabled
-    float balancePercentage
-    int balanceMinPlayers
-    int balanceThreshold
-    array<entity> balanceVoters
-    bool balancePostmatch
-
-    bool autobalanceEnabled
-    int autobalanceDiff
-    array<entity> autobalancePlayerQueue
 
     bool extendEnabled
     float extendPercentage
     int extendMinutes
     int extendThreshold
     array<entity> extendVoters
-
-    bool skipEnabled
-    float skipPercentage
-    int skipThreshold
-    array<entity> skipVoters
-
-    bool rollEnabled
-    int rollLimit
-    table<string, int> rollCountTable
-
-    bool rebalancedBuffsEnabled
-    bool rebalancedNerfsEnabled
-    bool rebalancedLatestEnabled
-
-    bool muteEnabled
-    bool muteSave
-    array<string> mutedPlayers
-
-    bool lockdownEnabled
-    bool isLockdown
 
     bool killstreakEnabled
     int killstreakIncrement
@@ -159,51 +64,23 @@ struct {
     table<string, int> pitfallTable
 
     bool jokeMarvinEnabled
-    bool jokeDroneEnabled
-    bool jokeKillsEnabled
-    bool jokeEzfragsEnabled
+    table<string, int> marvinKillTable
+    int marvinKillsTotal
 
-    bool customCommandsEnabled
-    array<CustomCommand> customCommands
+    bool jokeKillsEnabled
+
+    bool jokeEzfragsEnabled
 
     bool antispamEnabled
     int antispamPeriod
     int antispamLimit
     table< entity, array<float> > playerMessageTimes
-
-    bool chatMentionEnabled
 } file
 
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
 void function fm_Init() {
-    file.debugEnabled = GetConVarBool("fm_debug_enabled")
-
-    // admins
-    array<string> adminUids = split(GetConVarString("fm_admin_uids"), ",")
-    foreach (string uid in adminUids) {
-        file.adminUids.append(strip(uid))
-    }
-    file.adminAuthEnabled = GetConVarBool("fm_admin_auth_enabled")
-    file.adminPassword = GetConVarString("fm_admin_password")
-    file.authenticatedAdmins = []
-    file.adminAuthUnauthChatBlock = GetConVarBool("fm_admin_auth_unauth_chat_block")
-
-    // welcome
-    file.welcomeEnabled = GetConVarBool("fm_welcome_enabled")
-    file.welcome = GetConVarString("fm_welcome")
-    file.welcomeNotes = []
-    array<string> welcomeNotes = split(GetConVarString("fm_welcome_notes"), "|")
-    foreach (string welcomeNote in welcomeNotes) {
-        file.welcomeNotes.append(strip(welcomeNote))
-    }
-    file.welcomedPlayers = []
-
-    // rules
-    file.rulesEnabled = GetConVarBool("fm_rules_enabled")
-    file.rulesOk = GetConVarString("fm_rules_ok")
-    file.rulesNotOk = GetConVarString("fm_rules_not_ok")
 
     // kick
     file.kickEnabled = GetConVarBool("fm_kick_enabled")
@@ -213,86 +90,12 @@ void function fm_Init() {
     file.kickTable = {}
     file.kickedPlayers = []
 
-    // maps
-    file.mapsEnabled = GetConVarBool("fm_maps_enabled")
-
-    file.maps = []
-    array<string> maps = split(GetConVarString("fm_maps"), ",")
-    foreach (string dirtyMap in maps) {
-        string map = strip(dirtyMap)
-        if (!IsValidMap(map)) {
-            Log("ignoring invalid map '" + map + "'")
-            continue
-        }
-
-        file.maps.append(map)
-    }
-    file.nextMapEnabled = GetConVarBool("fm_nextmap_enabled")
-    file.nextMapOnlyMaps = []
-    file.nextMapVoteTable = {}
-    file.nextMapHintEnabled = GetConVarBool("fm_nextmap_hint_enabled")
-    file.nextMapHintedPlayers = []
-    file.nextMapRepeatEnabled = GetConVarBool("fm_nextmap_repeat_enabled")
-
-    array<string> nextMapOnlyMaps = split(GetConVarString("fm_nextmap_only_maps"), ",")
-    foreach (string dirtyMap in nextMapOnlyMaps) {
-        string map = strip(dirtyMap)
-        if (!IsValidMap(map)) {
-            Log("ignoring invalid map '" + map + "'")
-            continue
-        }
-
-        file.nextMapOnlyMaps.append(map)
-    }
-
-    // switch
-    file.switchEnabled = GetConVarBool("fm_switch_enabled")
-    file.switchDiff = GetConVarInt("fm_switch_diff")
-    file.switchLimit = GetConVarInt("fm_switch_limit")
-    file.switchKill = GetConVarBool("fm_switch_kill")
-    file.switchCountTable = {}
-
-    // balance
-    file.balanceEnabled = GetConVarBool("fm_balance_enabled")
-    file.balancePercentage = GetConVarFloat("fm_balance_percentage")
-    file.balanceMinPlayers = GetConVarInt("fm_balance_min_players")
-    file.balanceThreshold = 0
-    file.balanceVoters = []
-    file.balancePostmatch = GetConVarBool("fm_balance_postmatch")
-
-    // autobalance
-    file.autobalanceEnabled = GetConVarBool("fm_autobalance_enabled")
-    file.autobalanceDiff = GetConVarInt("fm_autobalance_diff")
-    file.autobalancePlayerQueue = []
-
     // extend
     file.extendEnabled = GetConVarBool("fm_extend_enabled")
     file.extendPercentage = GetConVarFloat("fm_extend_percentage")
     file.extendMinutes = GetConVarInt("fm_extend_minutes")
     file.extendThreshold = 0
     file.extendVoters = []
-
-    // skip
-    file.skipEnabled = GetConVarBool("fm_skip_enabled")
-    file.skipPercentage = GetConVarFloat("fm_skip_percentage")
-    file.skipVoters = []
-
-    // roll
-    file.rollEnabled = GetConVarBool("fm_roll_enabled")
-    file.rollLimit = GetConVarInt("fm_roll_limit")
-    file.rollCountTable = {}
-
-    // rebalanced
-    file.rebalancedBuffsEnabled = GetConVarBool("fm_rebalanced_buffs_enabled")
-    file.rebalancedNerfsEnabled = GetConVarBool("fm_rebalanced_nerfs_enabled")
-    file.rebalancedLatestEnabled = GetConVarBool("fm_rebalanced_latest_enabled")
-
-    // admin commands
-    file.muteEnabled = GetConVarBool("fm_mute_enabled")
-    file.muteSave = GetConVarBool("fm_mute_save")
-    file.mutedPlayers = []
-
-    file.lockdownEnabled = GetConVarBool("fm_lockdown_enabled")
 
     file.yellEnabled = GetConVarBool("fm_yell_enabled")
     file.slayEnabled = GetConVarBool("fm_slay_enabled")
@@ -314,376 +117,61 @@ void function fm_Init() {
     file.pitfallTable = {}
 
     file.jokeMarvinEnabled = GetConVarBool("fm_joke_marvin_enabled")
-    file.jokeDroneEnabled = GetConVarBool("fm_joke_drone_enabled")
+    file.marvinKillTable = {}
+    file.marvinKillsTotal = 0
+
     file.jokeKillsEnabled = GetConVarBool("fm_joke_kills_enabled")
+
     file.jokeEzfragsEnabled = GetConVarBool("fm_joke_ezfrags_enabled")
 
-    // misc
-    file.antispamEnabled = GetConVarBool("fm_antispam_enabled")
-    file.antispamPeriod = GetConVarInt("fm_antispam_period")
-    file.antispamLimit = GetConVarInt("fm_antispam_limit")
-    file.playerMessageTimes = {}
-
-    file.chatMentionEnabled = GetConVarBool("fm_chat_mention_enabled")
-
-    // define commands
-    CommandInfo cmdHelp = NewCommandInfo(
-        ["!help"],
-        CommandHelp,
-        0, 0,
-        "!help => get help", ""
-    )
-
-    CommandInfo cmdRules = NewCommandInfo(
-        ["!rules"],
-        CommandRules,
-        0, 0,
-        "!rules => show rules", ""
-    )
-
-    CommandInfo cmdKick = NewCommandInfo(
-        ["!kick"],
-        CommandKick,
-        1, 1,
-        "!kick <full or partial player name> => vote to kick a player",
-        "!kick <full or partial player name> (force) => vote to kick a player (or force)",
-        C_FORCE
-    )
-
-    CommandInfo cmdMaps = NewCommandInfo(
-        ["!maps"],
-        CommandMaps,
-        0, 0,
-        "!maps => list available maps", ""
-    )
-
-    CommandInfo cmdNextMap = NewCommandInfo(
-        ["!nextmap", "!nm"],
-        CommandNextMap,
-        1, 3,
-        "!nextmap/!nm <full or partial map name> => vote for next map", ""
-    )
-
-    CommandInfo cmdSwitch = NewCommandInfo(
-        ["!switch", "!sw"],
-        CommandSwitch,
-        0, 0,
-        "!switch/!sw => join opposite team",
-        "!switch/!sw (player) => join opposite team (or switch another player)",
-        C_ADMINARG
-    )
-
-    CommandInfo cmdBalance = NewCommandInfo(
-        ["!teambalance", "!tb"],
-        CommandBalance,
-        0, 0,
-        "!teambalance/!tb => vote for team balance",
-        "!teambalance/!tb (force) => vote for team balance (or force)",
-        C_FORCE
-    )
-
-    CommandInfo cmdExtend = NewCommandInfo(
-        ["!extend", "!ex"],
-        CommandExtend,
-        0, 0,
-        "!extend/!ex => vote to extend map time",
-        "!extend/!ex (force) => vote to extend map time (or force)",
-        C_FORCE
-    )
-
-    CommandInfo cmdSkip = NewCommandInfo(
-        ["!skip"],
-        CommandSkip,
-        0, 0,
-        "!skip => vote to skip current map",
-        "!skip (force) => vote to skip current map (or force)",
-        C_FORCE
-    )
-
-    CommandInfo cmdBuffs = NewCommandInfo(
-        ["!buffs"], 
-        CommandBuffs,
-        0, 0,
-        "!buffs => list buffs on server", ""
-    )
-
-    CommandInfo cmdNerfs = NewCommandInfo(
-        ["!nerfs"], 
-        CommandNerfs,
-        0, 0,
-        "!nerfs => list nerfs on server", ""
-    )
-
-    CommandInfo cmdLatest = NewCommandInfo(
-        ["!latest"],
-        CommandLatest,
-        0, 0,
-        "!latest => list latest buffs/nerfs on server", ""
-    )
-
-    CommandInfo cmdRoll = NewCommandInfo(
-        ["!roll"],  
-        CommandRoll,
-        0, 0,
-        "!roll => roll a number between 0 and 100", ""
-    )
-
-    // admin commands
-    CommandInfo cmdAuth = NewCommandInfo(
-        ["!auth"],
-        CommandAuth,
-        1, 1,
-        "!auth <password> => authenticate yourself as an admin", "",
-        C_ADMIN | C_SILENT
-    )
-
-    CommandInfo cmdMute = NewCommandInfo(
-        ["!mute"],
-        CommandMute,
-        1, 1,
-        "!mute <full or partial player name> => mute a player", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdUnmute = NewCommandInfo(
-        ["!unmute"],
-        CommandUnmute,
-        1, 1,
-        "!unmute <full or partial player name> => unmute a player", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdLockdown = NewCommandInfo(
-        ["!lockdown"],
-        CommandLockdown,
-        0, 0,
-        "!lockdown => prevent new players from joining", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdUnlockdown = NewCommandInfo(
-        ["!unlockdown"],
-        CommandUnlockdown,
-        0, 0,
-        "!unlockdown => allow new players to join", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdYell = NewCommandInfo(
-        ["!yell"],  
-        CommandYell,
-        1, NOMAX,
-        "!yell ... => yell something", "",
-        C_ADMIN | C_SILENT
-    )
-
-    CommandInfo cmdSlay = NewCommandInfo(
-        ["!slay"],
-        CommandSlay,
-        1, 1,
-        "!slay <player | all | us | them> => slay players", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdFreeze = NewCommandInfo(
-        ["!freeze"],
-        CommandFreeze,
-        1, 1,
-        "!freeze <player | all | us | them> => freeze players", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdStim = NewCommandInfo(
-        ["!stim"],
-        CommandStim,
-        1, 1,
-        "!stim <player | all | us | them> => give stim", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdSalvo = NewCommandInfo(
-        ["!salvo"],
-        CommandSalvo,
-        1, 1,
-        "!salvo <player | all | us | them> => give flight core", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdTank = NewCommandInfo(
-        ["!tank"],
-        CommandTank,
-        1, 1,
-        "!tank <player | all | us | them> => make tanky", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdFly = NewCommandInfo(
-        ["!fly"],
-        CommandFly,
-        1, 1,
-        "!fly <player | all | us | them> => make floaty", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdUnfly = NewCommandInfo(
-        ["!unfly"],
-        CommandUnfly,
-        1, 1,
-        "!unfly <player | all | us | them> => make not floaty", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdMrvn = NewCommandInfo(
-        ["!mrvn"],
-        CommandMrvn,
-        0, 0,
-        "!mrvn => spawn a marvin", "",
-        C_ADMIN
-    )
-
-    CommandInfo cmdGrunt = NewCommandInfo(
-        ["!grunt"],
-        CommandGrunt,
-        0, 1,
-        "!grunt [player name] => spawn a grunt", "",
-        C_ADMIN
-    )
-
-    // add commands and callbacks based on convars
-    if (file.adminAuthEnabled) {
-        file.commands.append(cmdAuth)
-        AddCallback_OnClientDisconnected(Admin_OnClientDisconnected)
-    }
-
-    if (file.welcomeEnabled) {
-        AddCallback_OnPlayerRespawned(Welcome_OnPlayerRespawned)
-        AddCallback_OnClientDisconnected(Welcome_OnClientDisconnected)
-    }
-
-    file.commands.append(cmdHelp)
-
-    if (file.rulesEnabled) {
-        file.commands.append(cmdRules)
-    }
-
     if (file.kickEnabled) {
-        file.commands.append(cmdKick)
+        FSU_RegisterCommand( "kick", AccentOne( FSU_GetString("FSU_PREFIX") + "kick <full or partial player name>") + " - vote to kick a player.", "fvk", CommandKick, [] )
         AddCallback_OnPlayerRespawned(Kick_OnPlayerRespawned)
         AddCallback_OnClientDisconnected(Kick_OnClientDisconnected)
     }
 
-    int totalMaps = file.maps.len() + file.nextMapOnlyMaps.len()
-    if (totalMaps > 0) {
-        AddCallback_GameStateEnter(eGameState.Postmatch, PostmatchChangeMap)
-    }
-
-    if (file.mapsEnabled && totalMaps > 1) {
-        file.commands.append(cmdMaps)
-        if (file.nextMapEnabled) {
-            file.commands.append(cmdNextMap)
-            AddCallback_GameStateEnter(eGameState.WinnerDetermined, NextMap_OnWinnerDetermined)
-            AddCallback_OnClientDisconnected(NextMap_OnClientDisconnected)
-            if (file.nextMapHintEnabled) {
-                AddCallback_OnPlayerRespawned(NextMapHint_OnPlayerRespawned)
-            }
-        }
-    }
-
-    if (file.switchEnabled && !IsFFAGame()) {
-        file.commands.append(cmdSwitch)
-    }
-
-    if (file.balanceEnabled && !IsFFAGame()) {
-        file.commands.append(cmdBalance)
-        AddCallback_OnClientDisconnected(Balance_OnClientDisconnected)
-    }
-
-    if (file.balancePostmatch && !IsFFAGame()) {
-        AddCallback_GameStateEnter(eGameState.Postmatch, Balance_Postmatch)
-    }
-
-    if (file.autobalanceEnabled && !IsFFAGame()) {
-        AddCallback_GameStateEnter(eGameState.Playing, Autobalance_Start)
-        AddCallback_OnClientConnected(Autobalance_OnClientConnected)
-        AddCallback_OnClientDisconnected(Autobalance_OnClientDisconnected)
-    }
-
     if (file.extendEnabled) {
-        file.commands.append(cmdExtend)
+        FSU_RegisterCommand( "extend", AccentOne( FSU_GetString("FSU_PREFIX") + "extend") + " - vote to extend map time.", "fvk", CommandExtend, ["ex"] )
         AddCallback_OnClientDisconnected(Extend_OnClientDisconnected)
     }
 
-    if (file.skipEnabled && totalMaps > 1) {
-        file.commands.append(cmdSkip)
-        AddCallback_OnClientDisconnected(Skip_OnClientDisconnected)
-    }
-
-    if (file.rebalancedBuffsEnabled) {
-        file.commands.append(cmdBuffs)
-    }
-
-    if (file.rebalancedNerfsEnabled) {
-        file.commands.append(cmdNerfs)
-    }
-
-    if (file.rebalancedLatestEnabled) {
-        file.commands.append(cmdLatest)
-    }
-
-    if (file.muteEnabled) {
-        file.commands.append(cmdMute)
-        file.commands.append(cmdUnmute)
-        if (!file.muteSave) {
-            AddCallback_OnClientDisconnected(Mute_OnClientDisconnected)
-        }
-    }
-
-    if (file.lockdownEnabled) {
-        file.commands.append(cmdLockdown)
-        file.commands.append(cmdUnlockdown)
-        AddCallback_OnClientConnected(Lockdown_OnPlayerConnected)
-    }
-
     if (file.yellEnabled) {
-        file.commands.append(cmdYell)
+        FSU_RegisterCommand( "announce", AccentOne( FSU_GetString("FSU_PREFIX") + "announce") + " - announce something.", "fvk", CommandYell, ["yell"], IsLoggedIn )
     }
 
     if (file.slayEnabled) {
-        file.commands.append(cmdSlay)
+        FSU_RegisterCommand( "slay", AccentOne( FSU_GetString("FSU_PREFIX") + "slay <player | all | us | them>") + " - slay players.", "fvk", CommandSlay, [], IsLoggedIn )
     }
 
     if (file.freezeEnabled) {
-        file.commands.append(cmdFreeze)
+        FSU_RegisterCommand( "freeze", AccentOne( FSU_GetString("FSU_PREFIX") + "freeze <player | all | us | them>") + " - freeze players.", "fvk", CommandFreeze, ["stop", "fr"], IsLoggedIn )
     }
 
     if (file.stimEnabled) {
-        file.commands.append(cmdStim)
+        FSU_RegisterCommand( "stim", AccentOne( FSU_GetString("FSU_PREFIX") + "stim <player | all | us | them>") + " - give stim to players.", "fvk", CommandStim, ["speedyboi"], IsLoggedIn )
     }
 
     if (file.salvoEnabled) {
-        file.commands.append(cmdSalvo)
+        FSU_RegisterCommand( "salvo", AccentOne( FSU_GetString("FSU_PREFIX") + "salvo <player | all | us | them>") + " - give flight core to players.", "fvk", CommandSalvo, [], IsLoggedIn )
     }
 
     if (file.tankEnabled) {
-        file.commands.append(cmdTank)
+        FSU_RegisterCommand( "tank", AccentOne( FSU_GetString("FSU_PREFIX") + "tank <player | all | us | them>") + " - make players tanky.", "fvk", CommandTank, [], IsLoggedIn )
     }
 
     if (file.flyEnabled) {
-        file.commands.append(cmdFly)
-        file.commands.append(cmdUnfly)
+        FSU_RegisterCommand( "fly", AccentOne( FSU_GetString("FSU_PREFIX") + "fly <player | all | us | them>") + " - make players floaty.", "fvk", CommandFly, [], IsLoggedIn )
+        FSU_RegisterCommand( "unfly", AccentOne( FSU_GetString("FSU_PREFIX") + "unfly <player | all | us | them>") + " - make players not floaty.", "fvk", CommandUnfly, [], IsLoggedIn )
     }
 
     if (file.mrvnEnabled) {
-        file.commands.append(cmdMrvn)
+        FSU_RegisterCommand( "mrvn", AccentOne( FSU_GetString("FSU_PREFIX") + "mrvn <player | all | us | them>") + " - spawn a marvin.", "fvk", CommandMrvn, ["marvin"], IsLoggedIn )
     }
 
     if (file.gruntEnabled) {
-        file.commands.append(cmdGrunt)
+        FSU_RegisterCommand( "grunt", AccentOne( FSU_GetString("FSU_PREFIX") + "grunt <player | all | us | them>") + " - spawn a grunt.", "fvk", CommandGrunt, [], IsLoggedIn )
     }
 
-    if (file.rollEnabled) {
-        file.commands.append(cmdRoll)
-    }
 
     if (file.killstreakEnabled) {
         AddCallback_OnPlayerKilled(Killstreak_OnPlayerKilled)
@@ -697,243 +185,14 @@ void function fm_Init() {
         AddDeathCallback("npc_marvin", Marvin_DeathCallback)
     }
 
-    if (file.jokeDroneEnabled) {
-        AddDeathCallback("npc_drone", Drone_DeathCallback)
-    }
-
     if (file.jokeKillsEnabled) {
         AddCallback_OnPlayerKilled(JokeKills_OnPlayerKilled)
     }
-
-    // custom commands
-    file.customCommandsEnabled = GetConVarBool("fm_custom_commands_enabled")
-    file.customCommands = []
-    if (file.customCommandsEnabled) {
-        string customCommands = GetConVarString("fm_custom_commands")
-        array<string> entries = split(customCommands, "|")
-        foreach (string entry in entries) {
-            array<string> pair = split(entry, "=")
-            if (pair.len() != 2) {
-                Log("ignoring invalid custom command: " + entry)
-                continue
-            }
-
-            CustomCommand command
-            command.name = pair[0]
-            command.text = pair[1]
-            file.customCommands.append(command)
-        }
-    }
-
 
     // the beef
     if (file.jokeEzfragsEnabled) {
         AddCallback_OnReceivedSayTextMessage(EzfragsCallback)
     }
-
-    AddCallback_OnReceivedSayTextMessage(ChatCallback)
-
-    if (file.antispamEnabled) {
-        AddCallback_OnReceivedSayTextMessage(AntispamCallback)
-    }
-
-    if (file.chatMentionEnabled) {
-        AddCallback_OnReceivedSayTextMessage(ChatMentionCallback)
-    }
-}
-
-//------------------------------------------------------------------------------
-// command handling
-//------------------------------------------------------------------------------
-CommandInfo function NewCommandInfo(
-    array<string> names,
-    bool functionref(entity, array<string>) fn,
-    int minArgs, int maxArgs,
-    string usage, string adminUsage,
-    int flags = 0x0
-) {
-    CommandInfo commandInfo
-    commandInfo.names = names
-    commandInfo.fn = fn
-    commandInfo.minArgs = minArgs
-    commandInfo.maxArgs = maxArgs
-    commandInfo.usage = usage
-    commandInfo.adminUsage = adminUsage
-    commandInfo.flags = flags
-    return commandInfo
-}
-
-// spaghetti bolognese
-ClServer_MessageStruct function ChatCallback(ClServer_MessageStruct messageInfo) {
-    if (IsLobby()) {
-        return messageInfo
-    }
-
-    entity player = messageInfo.player
-    string message = strip(messageInfo.message)
-    array<string> args = split(message, " ")
-
-    // fuzz check
-    if (args.len() == 0) {
-        messageInfo.shouldBlock = true
-        return messageInfo
-    }
-
-    string command = args[0].tolower()
-    args.remove(0)
-
-    // prevent spoofers from pretending to be admins
-    if (file.adminAuthEnabled && file.adminAuthUnauthChatBlock && IsNonAuthenticatedAdmin(player) && command != "!auth") {
-        SendMessage(player, ErrorColor("authenticate first"))
-        messageInfo.shouldBlock = true
-        return messageInfo
-    }
-
-    bool isCommand = format("%c", message[0]) == "!"
-    if (!isCommand) {
-        // prevent mewn from leaking the admin password
-        if (file.adminAuthEnabled && IsAdmin(player) && message.tolower().find(file.adminPassword.tolower()) != null) {
-            SendMessage(player, ErrorColor("learn to type, mewn"))
-            messageInfo.shouldBlock = true
-        }
-
-        if (file.mutedPlayers.contains(player.GetUID())) {
-            Log("[ChatCallback] muted message from " + player.GetPlayerName() + ": " + messageInfo.message)
-            SendMessage(player, ErrorColor("you are muted"))
-            messageInfo.shouldBlock = true
-        }
-
-        return messageInfo
-    }
-
-    foreach (CustomCommand c in file.customCommands) {
-        if (c.name == command) {
-            SendMessage(player, PrivateColor(c.text))
-            return messageInfo
-        }
-    }
-
-    bool commandFound = false
-    bool commandSuccess = false
-    foreach (CommandInfo c in file.commands) {
-        if (!c.names.contains(command)) {
-            continue
-        }
-
-        bool isAdminCmd = (c.flags & C_ADMIN) > 0
-        if (isAdminCmd && !IsAdmin(player)) {
-            break
-        }
-
-        commandFound = true
-
-        bool isSilentCmd = (c.flags & C_SILENT) > 0
-        messageInfo.shouldBlock = isSilentCmd
-
-        if (isAdminCmd && IsNonAuthenticatedAdmin(player) && command != "!auth") {
-            SendMessage(player, ErrorColor("authenticate first"))
-            commandSuccess = false
-            break
-        }
-
-        int maxArgs = c.maxArgs
-        bool isForceableCmd = (c.flags & C_FORCE) > 0;
-        if (IsAdmin(player) && isForceableCmd) {
-            maxArgs += 1
-            // check here if force is valid to avoid duplicate code in commands
-            if (args.len() == maxArgs) {
-                string force = args[maxArgs - 1]
-                if (force != "force") {
-                    SendMessage(player, ErrorColor("unknown option: " + force))
-                    commandSuccess = false
-                    break
-                }
-
-                if (IsNonAuthenticatedAdmin(player)) {
-                    SendMessage(player, ErrorColor("authenticate first"))
-                    commandSuccess = false
-                    break
-                }
-            }
-        }
-
-        bool hasAdminArg = (c.flags & C_ADMINARG) > 0
-        if (IsAdmin(player) && hasAdminArg) {
-            maxArgs += 1
-            if (args.len() == maxArgs && IsNonAuthenticatedAdmin(player)) {
-                SendMessage(player, ErrorColor("authenticate first"))
-                commandSuccess = false
-                break
-            }
-        }
-
-        if (args.len() < c.minArgs || (args.len() > maxArgs)) {
-            string usage = c.usage
-            if (IsAdmin(player) && c.adminUsage != "") {
-                usage = c.adminUsage
-            }
-
-            SendMessage(player, ErrorColor("usage: " + usage))
-            commandSuccess = false
-            break
-        }
-
-        commandSuccess = c.fn(player, args)
-    }
-
-    if (!commandFound) {
-        SendMessage(player, ErrorColor("unknown command: " + command))
-        messageInfo.shouldBlock = true
-    } else if (!commandSuccess) {
-        messageInfo.shouldBlock = true
-    }
-
-    return messageInfo
-}
-
-ClServer_MessageStruct function AntispamCallback(ClServer_MessageStruct messageInfo) {
-    // only visible messages are counted towards spam
-    if (messageInfo.shouldBlock) {
-        return messageInfo
-    }
-
-    entity player = messageInfo.player
-    if (IsAuthenticatedAdmin(player)) {
-        return messageInfo
-    }
-
-    float latestTime = Time()
-    array<float> messageTimes = [latestTime]
-    if (player in file.playerMessageTimes) {
-        messageTimes = file.playerMessageTimes[player]
-        messageTimes.append(latestTime)
-    }
-
-    file.playerMessageTimes[player] <- messageTimes
-
-    // don't do any further processing if limit hasn't been reached
-    if (messageTimes.len() < file.antispamLimit) {
-        return messageInfo
-    }
-
-    // remove message times older than antispam period
-    float cutoff = latestTime - float(file.antispamPeriod)
-    while (messageTimes.len() > 0 && messageTimes[0] < cutoff) {
-        messageTimes.remove(0)
-    }
-
-    // valid message if limit hasn't been reached during period
-    if (messageTimes.len() < file.antispamLimit) {
-        return messageInfo
-    }
-
-    // take action at this point
-    string playerName = player.GetPlayerName()
-    ServerCommand("kick " + playerName)
-    Log("[AntispamCallback] " + playerName + " kicked due to spam")
-    AnnounceMessage(AnnounceColor(playerName + " has been kicked due to spam"))
-
-    return messageInfo
 }
 
 ClServer_MessageStruct function EzfragsCallback(ClServer_MessageStruct messageInfo) {
@@ -958,167 +217,20 @@ ClServer_MessageStruct function EzfragsCallback(ClServer_MessageStruct messageIn
     return messageInfo
 }
 
-ClServer_MessageStruct function ChatMentionCallback(ClServer_MessageStruct messageInfo) {
-    // fuzz sanitizing is done in ChatCallBack
-    if (messageInfo.shouldBlock) {
-        return messageInfo
-    }
-
-    array<string> oldWords = split(messageInfo.message, " ")
-    array<string> newWords = []
-    foreach (string word in oldWords) {
-        bool isMention = format("%c", word[0]) == "@"
-        if (!isMention || word.len() == 1) {
-            newWords.append(word)
-            continue
-        }
-
-        string namePart = word.slice(1)
-        array<entity> players = FindPlayersBySubstring(namePart)
-        if (players.len() != 1) {
-            newWords.append(word)
-            continue
-        }
-
-        entity player = players[0]
-        string mention = PrivateColor("@" + player.GetPlayerName() + White(""))
-        newWords.append(mention)
-    }
-
-    messageInfo.message = Join(newWords, " ")
-    return messageInfo
-}
-
-//------------------------------------------------------------------------------
-// admins
-//------------------------------------------------------------------------------
-void function Admin_OnClientDisconnected(entity player) {
-    if (!IsAdmin(player)) {
-        return
-    }
-
-    string uid = player.GetUID()
-    if (file.authenticatedAdmins.contains(uid)) {
-        file.authenticatedAdmins.remove(file.authenticatedAdmins.find(uid))
-    }
-}
-
-//------------------------------------------------------------------------------
-// welcome
-//------------------------------------------------------------------------------
-void function Welcome_OnPlayerRespawned(entity player) {
-    string uid = player.GetUID()
-    if (file.welcomedPlayers.contains(uid)) {
-        return
-    }
-
-    SendMessage(player, PrivateColor(file.welcome))
-    bool hasNoteNumber = file.welcomeNotes.len() > 1
-    for (int i = 0; i < file.welcomeNotes.len(); i++) {
-        string notePrefix = hasNoteNumber ? format("note %d: ", i + 1) : "note: "
-        string note = ErrorColor(notePrefix) + PrivateColor(file.welcomeNotes[i])
-        SendMessage(player, note)
-    }
-
-    file.welcomedPlayers.append(uid)
-}
-
-void function Welcome_OnClientDisconnected(entity player) {
-    string uid = player.GetUID()
-    if (file.welcomedPlayers.contains(uid)) {
-        file.welcomedPlayers.remove(file.welcomedPlayers.find(uid))
-    }
-}
-
-//------------------------------------------------------------------------------
-// help
-//------------------------------------------------------------------------------
-bool function CommandHelp(entity player, array<string> args) {
-    array<string> userCommands = []
-    array<string> adminCommands = []
-    foreach (CommandInfo c in file.commands) {
-        string names = Join(c.names, "/")
-        if (c.flags & C_ADMIN) {
-            adminCommands.append(names)
-        } else {
-            userCommands.append(names)
-        }
-    }
-
-    foreach (CustomCommand c in file.customCommands) {
-        userCommands.append(c.name)
-    }
-
-    string userHelp = "available commands: " + Join(userCommands, ", ")
-    SendMessage(player, PrivateColor(userHelp))
-
-    if (IsAdmin(player)) {
-        string adminHelp = "admin commands: " + Join(adminCommands, ", ")
-        SendMessage(player, PrivateColor(adminHelp))
-    }
-
-    array<string> onlineAdminNames = []
-    foreach (entity possibleAdmin in GetPlayerArray()) {
-        if (!IsAdmin(possibleAdmin)) {
-            continue
-        }
-
-        string displayName = possibleAdmin.GetPlayerName()
-        if (IsNonAuthenticatedAdmin(possibleAdmin)) {
-            displayName += "(?)"
-        }
-
-        onlineAdminNames.append(displayName)
-    }
-
-    if (onlineAdminNames.len() == 0) {
-        return true
-    }
-
-    string adminsOnline = "admins online: " + Join(onlineAdminNames, ", ")
-    SendMessage(player, PrivateColor(adminsOnline))
-
-    return true
-}
-
-//------------------------------------------------------------------------------
-// rules
-//------------------------------------------------------------------------------
-bool function CommandRules(entity player, array<string> args) {
-    SendMessage(player, PrivateColor("ok = " + file.rulesOk))
-    SendMessage(player, ErrorColor("not ok = " + file.rulesNotOk))
-    return true
-}
-
-//------------------------------------------------------------------------------
-// auth
-//------------------------------------------------------------------------------
-bool function CommandAuth(entity player, array<string> args) {
-    if (IsAuthenticatedAdmin(player)) {
-        SendMessage(player, PrivateColor("you are already authenticated"))
-        return false
-    }
-
-    string password = args[0]
-    if (password != file.adminPassword) {
-        SendMessage(player, ErrorColor("wrong password"))
-        return false
-    }
-
-    file.authenticatedAdmins.append(player.GetUID())
-    SendMessage(player, PrivateColor("hello, admin!"))
-
-    return true
-}
 
 //------------------------------------------------------------------------------
 // kick
 //------------------------------------------------------------------------------
-bool function CommandKick(entity player, array<string> args) {
+void function CommandKick(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to kick?")
+        return
+    }
+
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     entity target = result.players[0]
@@ -1126,32 +238,31 @@ bool function CommandKick(entity player, array<string> args) {
     string targetName = target.GetPlayerName()
 
     if (player == target) {
-        SendMessage(player, ErrorColor("you can't kick yourself"))
-        return false
+        SendMessage(player, ErrorColor("You can't kick yourself."))
+        return
     }
 
-    bool isForced = args.len() == 2
-    if (IsAuthenticatedAdmin(player) && isForced) {
+    if (IsLoggedIn(player) && args.len() == 2 && args[1] == "force") {
         // allow admins to force kick spoofed admins
-        if (IsAuthenticatedAdmin(target)) {
-            SendMessage(player, ErrorColor("you can't kick an authenticated admin"))
-            return false
+        if (IsLoggedIn(target)) {
+            SendMessage(player, ErrorColor("You can't kick an authenticated admin."))
+            return
         }
 
-        Log("[CommandKick] " + targetName + " kicked by " + player.GetPlayerName())
+        print("[FSU][FVNK] " + targetName + " kicked by " + player.GetPlayerName())
         KickPlayer(target)
-        return true
+        return
     }
 
-    if (IsAdmin(target)) {
-        SendMessage(player, ErrorColor("you can't kick an admin"))
-        return false
+    if (CanBeAdmin(target)) {
+        SendMessage(player, ErrorColor("You can't kick an admin."))
+        return
     }
 
     if (GetPlayerArray().len() < file.kickMinPlayers) {
         // TODO: store into kicktable anyway?
-        SendMessage(player, ErrorColor("not enough players for kick vote, at least " + file.kickMinPlayers + " required"))
-        return false
+        SendMessage(player, ErrorColor("Not enough players for vote kick!") + "At least " + file.kickMinPlayers + " are needed!")
+        return
     }
 
     // ensure kicked player is in file.kickTable
@@ -1166,19 +277,19 @@ bool function CommandKick(entity player, array<string> args) {
         kickInfo.voters.append(player)
         kickInfo.threshold = Threshold(GetPlayerArray().len(), file.kickPercentage)
         file.kickTable[targetUid] <- kickInfo
+        AnnounceMessage( AnnounceColor("A vote to kick ") + UsernameColor(targetName) + AnnounceColor(" has been started!") )
     }
 
     // kick if votes exceed threshold
     KickInfo kickInfo = file.kickTable[targetUid]
     if (kickInfo.voters.len() >= kickInfo.threshold) {
-        Log("[CommandKick] " + targetName + " kicked by player vote")
+        print("[FSU][FVNK] " + targetName + " kicked by player vote!")
         KickPlayer(target)
     } else {
-        int remainingVotes = kickInfo.threshold - kickInfo.voters.len()
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " wants to kick " + targetName + ", " + remainingVotes + " more vote(s) required"))
+        AnnounceMessage( AccentTwo("[" + kickInfo.voters.len() + "/" + kickInfo.threshold + "]") + AnnounceColor(" players have voted to kick ") + UsernameColor(targetName) + AnnounceColor(", ") + AccentOne("!kick <player>") + AnnounceColor(".") )
     }
 
-    return true
+    return
 }
 
 void function KickPlayer(entity player, bool announce = true) {
@@ -1193,13 +304,13 @@ void function KickPlayer(entity player, bool announce = true) {
 
     ServerCommand("kick " + player.GetPlayerName())
     if (announce) {
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " has been kicked"))
+        AnnounceMessage(UsernameColor(player.GetPlayerName()) + SuccessColor(" has been kicked"))
     }
 }
 
 void function Kick_OnPlayerRespawned(entity player) {
     if (file.kickedPlayers.contains(player.GetUID())) {
-        Log("[Kick_OnPlayerRespawned] previously kicked " + player.GetPlayerName() + " tried to rejoin")
+        print("[FSU][FVNK] previously kicked " + player.GetPlayerName() + " tried to rejoin")
         KickPlayer(player, false)
     }
 }
@@ -1220,526 +331,11 @@ void function Kick_OnClientDisconnected(entity player) {
     }
 }
 
-//------------------------------------------------------------------------------
-// maps
-//------------------------------------------------------------------------------
-table<string, string> MAP_NAME_TABLE = {
-    mp_angel_city = "Angel City",
-    mp_black_water_canal = "Black Water Canal",
-    mp_coliseum = "Coliseum",
-    mp_coliseum_column = "Pillars",
-    mp_colony02 = "Colony",
-    mp_complex3 = "Complex",
-    mp_crashsite3 = "Crash Site",
-    mp_drydock = "Drydock",
-    mp_eden = "Eden",
-    mp_forwardbase_kodai = "Forwardbase Kodai",
-    mp_glitch = "Glitch",
-    mp_grave = "Boomtown",
-    mp_homestead = "Homestead",
-    mp_lf_deck = "Deck",
-    mp_lf_meadow = "Meadow",
-    mp_lf_stacks = "Stacks",
-    mp_lf_township = "Township",
-    mp_lf_traffic = "Traffic",
-    mp_lf_uma = "UMA",
-    mp_relic02 = "Relic",
-    mp_rise = "Rise",
-    mp_thaw = "Exoplanet",
-    mp_wargames = "Wargames"
-}
-
-string function MapName(string map) {
-    return MAP_NAME_TABLE[map].tolower()
-}
-
-bool function IsValidMap(string map) {
-    return map in MAP_NAME_TABLE
-}
-
-string function MapsString(array<string> maps) {
-    array<string> mapNames = []
-    foreach (string map in maps) {
-        mapNames.append(MapName(map))
-    }
-
-    return Join(mapNames, ", ")
-}
-
-array<string> function AllMaps() {
-    array<string> allMaps = []
-    foreach (map in file.maps) {
-        allMaps.append(map)
-    }
-    foreach (map in file.nextMapOnlyMaps) {
-        allMaps.append(map)
-    }
-
-    return allMaps
-}
-
-bool function CommandMaps(entity player, array<string> args) {
-    string mapsInRotation = MapsString(file.maps)
-    SendMessage(player, PrivateColor("maps in rotation: " + mapsInRotation))
-    if (file.nextMapOnlyMaps.len() > 0) {
-        string voteOnlyMaps = MapsString(file.nextMapOnlyMaps)
-        SendMessage(player, PrivateColor("maps by vote only: " + voteOnlyMaps))
-    }
-
-    return true
-}
-
-bool function CommandNextMap(entity player, array<string> args) {
-    string mapName = Join(args, " ")
-    array<string> foundMaps = FindMapsBySubstring(mapName)
-
-    if (foundMaps.len() == 0) {
-        SendMessage(player, ErrorColor("map '" + mapName + "' not found"))
-        return false
-    }
-
-    if (foundMaps.len() > 1) {
-        SendMessage(player, ErrorColor("multiple matches for map '" + mapName + "', be more specific"))
-        return false
-    }
-
-    string nextMap = foundMaps[0]
-    if (!file.maps.contains(nextMap) && !file.nextMapOnlyMaps.contains(nextMap)) {
-        string mapsAvailable = MapsString(AllMaps())
-        SendMessage(player, ErrorColor(MapName(nextMap) + " is not in the map pool, available maps: " + mapsAvailable))
-        return false
-    }
-
-    if (mapName.tolower() == "anal") {
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " tried the funny"))
-        return false
-    }
-
-    if (nextMap == GetMapName() && !file.nextMapRepeatEnabled) {
-        SendMessage(player, ErrorColor("you can't vote for the current map"))
-        return false
-    }
-
-    file.nextMapVoteTable[player] <- nextMap
-    AnnounceMessage(AnnounceColor(player.GetPlayerName() + " wants to play on " + MapName(nextMap)))
-    return true;
-}
-
-void function PostmatchChangeMap() {
-    thread DoChangeMap(GAME_POSTMATCH_LENGTH - 1)
-}
-
-void function DoChangeMap(float waitTime) {
-    wait waitTime
-
-    string nextMap = GetUsualNextMap()
-    if (file.nextMapEnabled) {
-        string drawnNextMap = DrawNextMapFromVoteTable()
-        if (drawnNextMap != "") {
-            nextMap = drawnNextMap
-        }
-    }
-
-    GameRules_ChangeMap(nextMap, GameRules_GetGameMode())
-}
-
-string function GetUsualNextMap() {
-    string currentMap = GetMapName()
-    bool noPlayers = GetPlayerArray().len() == 0
-    bool isLastMap = currentMap == file.maps[file.maps.len() - 1]
-    bool isUnknownMap = !file.maps.contains(currentMap)
-    if (noPlayers || isLastMap || isUnknownMap) {
-        return file.maps[0]
-    }
-
-    string nextMap = file.maps[file.maps.find(currentMap) + 1]
-
-    return nextMap
-}
-
-string function DrawNextMapFromVoteTable() {
-    array<string> maps = []
-    foreach (entity player, string map in file.nextMapVoteTable) {
-        maps.append(map)
-    }
-
-    if (maps.len() == 0) {
-        return ""
-    }
-
-    string nextMap = maps[RandomInt(maps.len())]
-    return nextMap
-}
-
-string function NextMapCandidatesString() {
-    array<NextMapScore> scores = NextMapCandidates()
-    int totalVotes = file.nextMapVoteTable.len()
-    array<string> chanceStrings = []
-    for (int i = 0; i < scores.len(); i++) {
-        NextMapScore score = scores[i]
-        float chance = 100 * (float(score.votes) / float(totalVotes))
-        string chanceString = format("%s (%.0f%%)", MapName(score.map), chance)
-        chanceStrings.append(chanceString)
-    }
-
-    return Join(chanceStrings, ", ")
-}
-
-array<NextMapScore> function NextMapCandidates() {
-    table<string, int> mapVotes = {}
-    foreach (entity player, string map in file.nextMapVoteTable) {
-        if (map in mapVotes) {
-            int currentVotes = mapVotes[map]
-            mapVotes[map] <- currentVotes + 1
-        } else {
-            mapVotes[map] <- 1
-        }
-    }
-
-    array<NextMapScore> scores = []
-    foreach (string map, int votes in mapVotes) {
-        NextMapScore score
-        score.map = map
-        score.votes = votes
-        scores.append(score)
-    }
-
-    scores.sort(NextMapScoreSort)
-    return scores
-}
-
-int function NextMapScoreSort(NextMapScore a, NextMapScore b) {
-    if (a.votes == b.votes) {
-        return 0
-    }
-    return a.votes < b.votes ? 1 : -1
-}
-
-void function NextMap_OnWinnerDetermined() {
-    if (file.nextMapVoteTable.len() > 0) {
-        AnnounceMessage(AnnounceColor("next map chances: " + NextMapCandidatesString()))
-    }
-}
-
-void function NextMap_OnClientDisconnected(entity player) {
-    if (player in file.nextMapVoteTable) {
-        delete file.nextMapVoteTable[player]
-    }
-}
-
-void function NextMapHint_OnPlayerRespawned(entity player) {
-    string uid = player.GetUID()
-    if (file.nextMapHintedPlayers.contains(uid)) {
-        return
-    }
-
-    float endTime = expect float(GetServerVar("gameEndTime"))
-    if (IsCTF()) {
-        endTime = expect float(GetServerVar("roundEndTime"))
-    }
-    if (Time() < endTime / 2.0) {
-        return
-    }
-
-    if (!(player in file.nextMapVoteTable)) {
-        SendMessage(player, PrivateColor("hint: use !nextmap/!nm to vote for next map"))
-    }
-
-    file.nextMapHintedPlayers.append(uid)
-}
-
-//------------------------------------------------------------------------------
-// switch
-//------------------------------------------------------------------------------
-bool function CommandSwitch(entity player, array<string> args) {
-    entity target = player
-    bool isAdminSwitch = args.len() == 1
-    if (isAdminSwitch) {
-        string targetSearchName = args[0]
-        PlayerSearchResult result = RunPlayerSearch(player, targetSearchName)
-        if (result.kind < 0) {
-            return false
-        }
-        target = result.players[0]
-    }
-
-    string targetName = target.GetPlayerName()
-
-    string enoughMsg = "you've switched teams enough"
-    string flagMsg = "can't switch while you're holding the flag"
-    string teamMsg = "can't switch, there's enough players on the other team"
-    string switchMsg = targetName + " has switched teams"
-
-    if (isAdminSwitch) {
-        flagMsg = "can't switch " + targetName + ", they're holding a flag"
-        teamMsg = "can't switch " + targetName +  ", there's enough players on the other team"
-        switchMsg = targetName + "'s team has been switched"
-    }
-
-    string targetUid = target.GetUID()
-    if (!isAdminSwitch && targetUid in file.switchCountTable) {
-        int switchCount = file.switchCountTable[targetUid]
-        if (switchCount >= file.switchLimit) {
-            SendMessage(player, ErrorColor(enoughMsg))
-            return false
-        }
-    }
-
-    // ctf
-    if (!file.switchKill && PlayerHasEnemyFlag(target)) {
-        SendMessage(player, ErrorColor(flagMsg))
-        return false
-    }
-
-    int thisTeam = target.GetTeam()
-    int otherTeam = GetOtherTeam(thisTeam)
-
-    int thisTeamCount = GetPlayerArrayOfTeam(thisTeam).len()
-    int otherTeamCount = GetPlayerArrayOfTeam(otherTeam).len()
-
-    int playerDiff = thisTeamCount - otherTeamCount
-    if (playerDiff < file.switchDiff && otherTeamCount > 0) {
-        SendMessage(player, ErrorColor(teamMsg))
-        return false
-    }
-
-    int switchCount
-    if (targetUid in file.switchCountTable) {
-        switchCount = file.switchCountTable[targetUid] + 1
-    } else {
-        switchCount = 1
-    }
-
-    if (!isAdminSwitch) {
-        file.switchCountTable[targetUid] <- switchCount
-    }
-
-    // ctf: if player is holding a flag, he gotta die *before* setting the team
-    if (file.switchKill && IsAlive(target)) {
-        target.Die()
-    }
-
-    SetTeam(target, otherTeam)
-
-    AnnounceMessage(AnnounceColor(switchMsg))
-
-    return true
-}
-
-//------------------------------------------------------------------------------
-// balance
-//------------------------------------------------------------------------------
-bool function CommandBalance(entity player, array<string> args) {
-    bool isForced = args.len() == 1
-    if (IsAuthenticatedAdmin(player) && isForced) {
-        DoBalance()
-        return true
-    }
-
-    if (GetPlayerArray().len() < file.balanceMinPlayers) {
-        SendMessage(player, ErrorColor("not enough players for balance vote, at least " + file.balanceMinPlayers + " required"))
-        return false
-    }
-
-    if (file.balanceVoters.len() == 0) {
-        file.balanceThreshold = Threshold(GetPlayerArray().len(), file.balancePercentage)
-    }
-
-    if (!file.balanceVoters.contains(player)) {
-        file.balanceVoters.append(player)
-    }
-
-    if (file.balanceVoters.len() >= file.balanceThreshold) {
-        DoBalance()
-    } else {
-        int remainingVotes = file.balanceThreshold - file.balanceVoters.len()
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " wants team balance, " + remainingVotes + " more vote(s) required"))
-    }
-
-    return true
-}
-
-void function DoBalance() {
-    array<entity> players = GetPlayerArray()
-
-    array<entity> switchablePlayers = []
-    foreach (entity player in players) {
-        if (CanSwitchTeams(player)) {
-            switchablePlayers.append(player)
-        }
-    }
-
-    array<PlayerScore> scores = GetPlayerScores(switchablePlayers)
-    for (int i = 0; i < scores.len(); i++) {
-        entity player = scores[i].player
-        int oldTeam = player.GetTeam()
-        int newTeam = IsEven(i) ? TEAM_IMC : TEAM_MILITIA
-        SetTeam(player, newTeam)
-    }
-
-    AnnounceMessage(AnnounceColor("teams have been balanced"))
-
-    file.balanceVoters.clear()
-}
-
-array<PlayerScore> function GetPlayerScores(array<entity> players) {
-    array<PlayerScore> scores
-    foreach (entity player in players) {
-        PlayerScore score
-        score.player = player
-        score.val = CalculatePlayerScore(player)
-        scores.append(score)
-    }
-
-    scores.sort(PlayerScoreSort)
-
-    return scores
-}
-
-float function CalculatePlayerScore(entity player) {
-    if (IsCTF()) {
-        return CalculateCTFScore(player)
-    }
-
-    return CalculateKDScore(player)
-}
-
-float function CalculateCTFScore(entity player) {
-    int captureWeight = 10
-    int returnWeight = 5
-
-    int captures = player.GetPlayerGameStat(PGS_ASSAULT_SCORE)
-    int returns = player.GetPlayerGameStat(PGS_DEFENSE_SCORE)
-    int kills = player.GetPlayerGameStat(PGS_KILLS)
-    float score = float((captures * captureWeight) + (returns + returnWeight) + kills)
-    return score
-}
-
-float function CalculateKDScore(entity player) {
-    int kills = player.GetPlayerGameStat(PGS_KILLS)
-    int deaths = player.GetPlayerGameStat(PGS_DEATHS)
-    if (deaths == 0) {
-        deaths = 1
-    }
-
-    return float(kills) / float(deaths)
-}
-
-int function PlayerScoreSort(PlayerScore a, PlayerScore b) {
-    if (a.val == b.val) {
-        return 0
-    }
-
-    return a.val < b.val ? 1 : -1
-}
-
-void function Balance_Postmatch() {
-    DoBalance()
-}
-
-void function Balance_OnClientDisconnected(entity player) {
-    if (file.balanceVoters.contains(player)) {
-        file.balanceVoters.remove(file.balanceVoters.find(player))
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// autobalance
-//------------------------------------------------------------------------------
-float AUTOBALANCE_INTERVAL = 10
-
-void function Autobalance_Start() {
-    Log("starting autobalance loop")
-    thread Autobalance_Loop()
-}
-
-void function Autobalance_Loop() {
-    while (true) {
-        wait AUTOBALANCE_INTERVAL
-        Autobalance_Check()
-    }
-}
-
-void function Autobalance_Check() {
-    int imcCount = GetPlayerArrayOfTeam(TEAM_IMC).len()
-    int militiaCount = GetPlayerArrayOfTeam(TEAM_MILITIA).len()
-
-    int fromTeam
-    int diff
-    if (imcCount == militiaCount) {
-        return
-    } else if (imcCount > militiaCount) {
-        fromTeam = TEAM_IMC
-        diff = imcCount - militiaCount
-    } else {
-        fromTeam = TEAM_MILITIA
-        diff = militiaCount - imcCount
-    }
-
-    if (diff < file.autobalanceDiff) {
-        return
-    }
-
-    DoAutobalance(fromTeam)
-}
-
-void function DoAutobalance(int fromTeam) {
-    array<entity> prio2 = []
-    foreach (entity player in file.autobalancePlayerQueue) {
-        if (player.GetTeam() == fromTeam && CanSwitchTeams(player)) {
-            prio2.append(player)
-        }
-    }
-
-    if (prio2.len() == 0) {
-        return
-    }
-
-    entity playerToSwitch = prio2[0]
-
-    array<entity> prio1 = []
-    foreach (entity player in prio2) {
-        // prefer not to switch players who have manually switched
-        if (!(player.GetUID() in file.switchCountTable)) {
-            prio1.append(player)
-        }
-    }
-
-    if (prio1.len() > 0) {
-        playerToSwitch = prio1[0]
-    }
-
-    int toTeam = GetOtherTeam(fromTeam) 
-    SetTeam(playerToSwitch, toTeam)
-
-    SendMessage(playerToSwitch, PrivateColor("you got autobalanced"))
-}
-
-void function Autobalance_OnClientConnected(entity player) {
-    if (file.autobalancePlayerQueue.contains(player)) {
-        return
-    }
-
-    // most recently joined players first in queue
-    file.autobalancePlayerQueue.insert(0, player)
-}
-
-void function Autobalance_OnClientDisconnected(entity player) {
-    if (file.autobalancePlayerQueue.contains(player)) {
-        file.autobalancePlayerQueue.remove(file.autobalancePlayerQueue.find(player))
-    }
-}
 
 //------------------------------------------------------------------------------
 // extend
 //------------------------------------------------------------------------------
-bool function CommandExtend(entity player, array<string> args) {
-    bool isForced = args.len() == 1
-    if (IsAuthenticatedAdmin(player) && isForced) {
-        DoExtend()
-        return true
-    }
+void function CommandExtend( entity player, array <string> args ) {
 
     if (file.extendVoters.len() == 0) {
         file.extendThreshold = Threshold(GetPlayerArray().len(), file.extendPercentage)
@@ -1752,11 +348,8 @@ bool function CommandExtend(entity player, array<string> args) {
     if (file.extendVoters.len() >= file.extendThreshold) {
         DoExtend()
     } else {
-        int remainingVotes = file.extendThreshold - file.extendVoters.len()
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " wants to extend the map, " + remainingVotes + " more vote(s) required"))
+        AnnounceMessage( AccentTwo("[" + file.extendVoters.len() + "/" + file.extendThreshold + "]") + AnnounceColor(" players want to extend the map, ") + AccentOne("!extend") + AnnounceColor(".") )
     }
-
-    return true
 }
 
 void function DoExtend() {
@@ -1764,7 +357,7 @@ void function DoExtend() {
     float newEndTime = currentEndTime + (60 * file.extendMinutes)
     SetServerVar("gameEndTime", newEndTime)
 
-    AnnounceMessage(AnnounceColor("map has been extended"))
+    AnnounceMessage(SuccessColor("Map has been extended!"))
 
     file.extendVoters.clear()
 }
@@ -1776,243 +369,30 @@ void function Extend_OnClientDisconnected(entity player) {
 }
 
 //------------------------------------------------------------------------------
-// skip
-//------------------------------------------------------------------------------
-bool function CommandSkip(entity player, array<string> args) {
-    if (GetGameState() < eGameState.Playing) {
-        SendMessage(player, ErrorColor("match hasn't begun yet"))
-        return false
-    }
-
-    if (GetGameState() >= eGameState.WinnerDetermined) {
-        SendMessage(player, ErrorColor("match is over already"))
-        return false
-    }
-    
-    bool isForced = args.len() == 1
-    if (IsAuthenticatedAdmin(player) && isForced) {
-        DoSkip()
-        return true
-    }
-
-    if (file.skipVoters.len() == 0) {
-        file.skipThreshold = Threshold(GetPlayerArray().len(), file.skipPercentage)
-    }
-
-    if (!file.skipVoters.contains(player)) {
-        file.skipVoters.append(player)
-    }
-
-    if (file.skipVoters.len() >= file.skipThreshold) {
-        DoSkip()
-    } else {
-        int remainingVotes = file.skipThreshold - file.skipVoters.len()
-        AnnounceMessage(AnnounceColor(player.GetPlayerName() + " wants to skip the current map, " + remainingVotes + " more vote(s) required"))
-    }
-
-    return true
-}
-
-void function DoSkip() {
-    float waitTime = 5.0
-    thread SkipAnnounceLoop(waitTime)
-    thread DoChangeMap(waitTime)
-    file.skipVoters.clear()
-}
-
-void function SkipAnnounceLoop(float waitTime) {
-    int seconds = int(waitTime)
-    AnnounceMessage(AnnounceColor("current map will be skipped in " + seconds + "..."))
-    for (int i = seconds - 1; i > 0; i--) {
-        // ctf fix, skip crashes if player has flag
-        if (IsCTF() && i <= 3) {
-            KillAll()
-        }
-
-        wait 1.0
-        AnnounceMessage(AnnounceColor(i + "..."))
-    }
-}
-
-void function KillAll() {
-    foreach (entity player in GetPlayerArray()) {
-        if (IsAlive(player)) {
-            player.Die()
-        }
-    }
-}
-
-void function Skip_OnClientDisconnected(entity player) {
-    if (file.skipVoters.contains(player)) {
-        file.skipVoters.remove(file.skipVoters.find(player))
-    }
-}
-
-//------------------------------------------------------------------------------
-// rebalanced
-//------------------------------------------------------------------------------
-const int CHAT_LINE_MAX = 95
-
-bool function CommandBuffs(entity player, array<string> args) {
-    PrintRebalancedEntryList(player, BUFF_LIST)
-    return true
-}
-
-bool function CommandNerfs(entity player, array<string> args) {
-    PrintRebalancedEntryList(player, NERF_LIST)
-    return true
-}
-
-bool function CommandLatest(entity player, array<string> args) {
-    PrintRebalancedEntryList(player, LATEST_LIST)
-    return true
-}
-
-void function PrintRebalancedEntryList(entity player, array<RebalancedEntry> entries) {
-    if (entries.len() == 0) {
-        return
-    }
-
-    array<string> formattedEntries = []
-    foreach (RebalancedEntry entry in entries) {
-        formattedEntries.append(FormatRebalancedEntry(entry))
-    }
-
-    string sep = "  |  "
-
-    array<string> lines = []
-    string currentLine = formattedEntries[0]
-    for (int i = 1; i < formattedEntries.len(); i++) {
-        string entry = formattedEntries[i]
-        if (currentLine.len() + sep.len() + entry.len() > CHAT_LINE_MAX) {
-            lines.append(currentLine)
-            currentLine = entry
-            continue
-        }
-
-        currentLine = currentLine + sep + entry
-    }
-    lines.append(currentLine)
-
-    foreach (string line in lines) {
-        SendMessage(player, PrivateColor(line))
-    }
-}
-
-string function FormatRebalancedEntry(RebalancedEntry entry) {
-    return format("[%s: %s]", entry.name, entry.desc)
-}
-
-//------------------------------------------------------------------------------
-// mute
-//------------------------------------------------------------------------------
-bool function CommandMute(entity player, array<string> args) {
-    string targetSearchName = args[0]
-    PlayerSearchResult result = RunPlayerSearch(player, targetSearchName)
-    if (result.kind < 0) {
-        return false
-    }
-
-    entity target = result.players[0]
-    string targetName = target.GetPlayerName()
-    string targetUid = target.GetUID()
-
-    if (file.mutedPlayers.contains(targetUid)) {
-        SendMessage(player, ErrorColor(targetName + " is already muted"))
-        return false
-    }
-
-    file.mutedPlayers.append(targetUid)
-    AnnounceMessage(AnnounceColor(targetName + " has been muted"))
-
-    return true
-}
-
-bool function CommandUnmute(entity player, array<string> args) {
-    string targetSearchName = args[0]
-    PlayerSearchResult result = RunPlayerSearch(player, targetSearchName)
-    if (result.kind < 0) {
-        return false
-    }
-
-    entity target = result.players[0]
-    string targetName = target.GetPlayerName()
-    string targetUid = target.GetUID()
-    if (!file.mutedPlayers.contains(targetUid)) {
-        SendMessage(player, ErrorColor(targetName + " is not muted"))
-        return false
-    }
-
-    file.mutedPlayers.remove(file.mutedPlayers.find(targetUid))
-    AnnounceMessage(AnnounceColor(targetName + " is no longer muted"))
-
-    return false
-}
-
-void function Mute_OnClientDisconnected(entity player) {
-    string uid = player.GetUID()
-    if (file.mutedPlayers.contains(uid)) {
-        file.mutedPlayers.remove(file.mutedPlayers.find(uid))
-    }
-}
-
-//------------------------------------------------------------------------------
-// lockdown
-//------------------------------------------------------------------------------
-bool function CommandLockdown(entity player, array<string> _args) {
-    if (file.isLockdown) {
-        SendMessage(player, ErrorColor("server is already locked down"))
-        return false
-    }
-
-    file.isLockdown = true
-
-    string msg = AnnounceColor("server is on ")
-    msg += ErrorColor("LOCKDOWN")
-    msg += AnnounceColor(" (no new players can join)")
-    AnnounceMessage(msg)
-
-    return true
-}
-
-bool function CommandUnlockdown(entity player, array<string> _args) {
-    if (!file.isLockdown) {
-        SendMessage(player, ErrorColor("server is not locked down"))
-        return false
-    }
-
-    file.isLockdown = false
-    AnnounceMessage(AnnounceColor("server is no longer on lockdown"))
-
-    return true
-}
-
-void function Lockdown_OnPlayerConnected(entity player) {
-    if (!file.isLockdown || IsAdmin(player)) {
-        return
-    }
-
-    string playerName = player.GetPlayerName()
-    ServerCommand("kick " + playerName)
-}
-
-//------------------------------------------------------------------------------
 // yell
 //------------------------------------------------------------------------------
-bool function CommandYell(entity player, array<string> args) {
+void function CommandYell(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + "What is it you want to announce?")
+        return
+    }
+
     string msg = Join(args, " ").toupper()
-    AnnounceHUD(msg, 255, 0, 0)
-    return true
+    AnnounceHUD(msg, 255, 200, 200)
 }
 
 //------------------------------------------------------------------------------
 // slay
 //------------------------------------------------------------------------------
-bool function CommandSlay(entity player, array<string> args) {
+void function CommandSlay(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to slay?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2022,19 +402,21 @@ bool function CommandSlay(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " has been slain"))
-
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" has been slain!"))
 }
 
 //------------------------------------------------------------------------------
 // freeze
 //------------------------------------------------------------------------------
-bool function CommandFreeze(entity player, array<string> args) {
+void function CommandFreeze(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to freeze?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2046,19 +428,21 @@ bool function CommandFreeze(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " has been frozen"))
-
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor( " has been frozen!"))
 }
 
 //------------------------------------------------------------------------------
 // stim
 //------------------------------------------------------------------------------
-bool function CommandStim(entity player, array<string> args) {
+void function CommandStim(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to make a speedy boi?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2068,18 +452,21 @@ bool function CommandStim(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " is going fast"))
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" is going fast!"))
 }
 
 //------------------------------------------------------------------------------
 // salvo
 //------------------------------------------------------------------------------
-bool function CommandSalvo(entity player, array<string> args) {
+void function CommandSalvo(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to death from above?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2094,18 +481,21 @@ bool function CommandSalvo(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " has flight core"))
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" has flight core!"))
 }
 
 //------------------------------------------------------------------------------
 // tank
 //------------------------------------------------------------------------------
-bool function CommandTank(entity player, array<string> args) {
+void function CommandTank(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to make tanky?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     int health = 1000
@@ -2117,18 +507,21 @@ bool function CommandTank(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " is tanky"))
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" is tanky!"))
 }
 
 //------------------------------------------------------------------------------
 // fly
 //------------------------------------------------------------------------------
-bool function CommandFly(entity player, array<string> args) {
+void function CommandFly(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want make floaty?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2138,15 +531,18 @@ bool function CommandFly(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " is flying"))
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" is flying!"))
 }
 
-bool function CommandUnfly(entity player, array<string> args) {
+void function CommandUnfly(entity player, array<string> args) {
+    if (args.len() == 0){
+        SendMessage(player, ErrorColor("No argument.") + " Who is it you want to take te gift of flight away from?")
+        return
+    }
     string targetSearchName = args[0]
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2156,15 +552,14 @@ bool function CommandUnfly(entity player, array<string> args) {
     }
 
     string name = PlayerSearchResultName(player, result)
-    AnnounceMessage(AnnounceColor(name + " is no longer flying"))
-    return true
+    AnnounceMessage(UsernameColor(name) + AnnounceColor(" is no longer flying!"))
 }
 
 //------------------------------------------------------------------------------
 // mrvn
 //------------------------------------------------------------------------------
 
-bool function CommandMrvn(entity player, array<string> args) {
+void function CommandMrvn(entity player, array<string> args) {
     int health = 1000
     entity marvin = CreateMarvin(TEAM_UNASSIGNED, player.GetOrigin(), player.GetAngles())
     marvin.kv.health = health
@@ -2173,15 +568,13 @@ bool function CommandMrvn(entity player, array<string> args) {
     HideName(marvin)
 
     thread MarvinJobThink(marvin)
-
-    return true
 }
 
-bool function CommandGrunt(entity player, array<string> args) {
+void function CommandGrunt(entity player, array<string> args) {
     string targetSearchName = args.len() == 1 ? args[0] : "me"
     PlayerSearchResult result = RunPlayerSearch(player, targetSearchName, PS_MODIFIERS | PS_ALIVE)
     if (result.kind < 0) {
-        return false
+        return
     }
 
     foreach (entity target in result.players) {
@@ -2195,51 +588,8 @@ bool function CommandGrunt(entity player, array<string> args) {
         SetSquad(grunt, squadName)
         grunt.EnableNPCFlag(NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE)
     }
-
-    return true
 }
 
-//------------------------------------------------------------------------------
-// roll
-//------------------------------------------------------------------------------
-bool function CommandRoll(entity player, array<string> args) {
-    string uid = player.GetUID()
-    int rollCount = 1
-    if (uid in file.rollCountTable) {
-        rollCount = file.rollCountTable[uid] + 1
-    }
-
-    if (rollCount > file.rollLimit) {
-        SendMessage(player, ErrorColor("you've rolled enough"))
-        return false
-    }
-
-    file.rollCountTable[uid] <- rollCount
-
-    int rollMax = 100
-    int num = RandomInt(rollMax) + 1
-    float f = float(num) / float(rollMax)
-
-    string name = player.GetPlayerName()
-    string msg = AnnounceColor(name + " rolled ") + ErrorColor("" + num)
-    msg += AnnounceColor("")
-    if (num == 1) {
-        msg += ", " + ErrorColor("lol")
-    } else if (num == 69) {
-        msg += ", " + ErrorColor("nice")
-    } else if (num == rollMax) {
-        msg += ", what a " + ErrorColor("CHAD")
-    } else if (f < 0.5) {
-        msg += ", meh"
-    } else if (f < 0.9) {
-        msg += ", alright"
-    } else {
-        msg += ", almost"
-    }
-
-    AnnounceMessage(AnnounceColor(msg))
-    return true
-}
 
 //------------------------------------------------------------------------------
 // killstreak
@@ -2322,11 +672,11 @@ void function Pitfalls_OnPlayerKilled(entity victim, entity attacker, var damage
     }
 
     string subject = PITFALL_MAP_SUBJECT_TABLE[map]
-    string msg = playerName + " has fallen " + subject + " " + count + " times"
+    string msg = playerName + " has fallen " + subject + " " + count + " times!"
     if (count == 1) {
         msg = playerName + " fell " + subject
     } else if (count == 2) {
-        msg = playerName + " fell " + subject + ", again"
+        msg = playerName + " fell " + subject + ", again :D"
     }
 
     AnnounceMessage(AnnounceColor(msg))
@@ -2343,23 +693,24 @@ void function Marvin_DeathCallback(entity victim, var damageInfo) {
         return
     }
 
-    string playerName = attacker.GetPlayerName()
-    string msg = playerName + " killed a marvin"
-    AnnounceMessage(AnnounceColor(msg))
-}
+    file.marvinKillsTotal += 1
 
-//------------------------------------------------------------------------------
-// drone joke
-//------------------------------------------------------------------------------
-void function Drone_DeathCallback(entity victim, var damageInfo) {
-    entity attacker = DamageInfo_GetAttacker(damageInfo)
-    if (!IsValid(attacker) || !attacker.IsPlayer()) {
-        return
+    string playerName = attacker.GetPlayerName()
+    int count = 1
+    if (playerName in file.marvinKillTable) {
+        count = file.marvinKillTable[playerName] + 1
     }
 
-    string playerName = attacker.GetPlayerName()
-    string msg = playerName + " destroyed a drone"
+    string msg = playerName + " has killed " + count + " marvins!"
+    if (count == 1) {
+        msg = playerName + " killed a marvin!"
+    } else if (count == 2) {
+        msg = playerName + " killed a marvin, again D:"
+    }
+
     AnnounceMessage(AnnounceColor(msg))
+
+    file.marvinKillTable[playerName] <- count
 }
 
 //------------------------------------------------------------------------------
@@ -2374,7 +725,7 @@ void function JokeKills_OnPlayerKilled(entity victim, entity attacker, var damag
     string verb
     switch (damageSourceId) {
         case eDamageSourceId.phase_shift:
-            verb = "got phased by"
+            verb = "got phased by!"
             break
         default:
             return
@@ -2438,13 +789,13 @@ PlayerSearchResult function RunPlayerSearch(
 
     result.players = FindPlayersBySubstring(playerName)
     if (result.players.len() == 0) {
-        SendMessage(commandUser, ErrorColor("player '" + playerName + "' not found"))
+        SendMessage(commandUser, ErrorColor("Player matching ") + UsernameColor(playerName) + ErrorColor(" not found!"))
         result.kind = PlayerSearchResultKind.NOT_FOUND
         return result
     }
 
     if (result.players.len() > 1) {
-        SendMessage(commandUser, ErrorColor("multiple matches for player '" + playerName + "', be more specific"))
+        SendMessage(commandUser, ErrorColor("There are multiple matching players for ") + UsernameColor(playerName) + ErrorColor(", be more specific."))
         result.kind = PlayerSearchResultKind.MULTIPLE
         return result
     }
@@ -2452,7 +803,7 @@ PlayerSearchResult function RunPlayerSearch(
     if ((flags & PS_ALIVE) > 0) {
         entity target = result.players[0]
         if (!IsAlive(target)) {
-            SendMessage(commandUser, ErrorColor(target.GetPlayerName() + " is dead"))
+            SendMessage(commandUser, ErrorColor(target.GetPlayerName() + " is dead."))
             result.kind = PlayerSearchResultKind.DEAD
             return result
         }
@@ -2464,9 +815,9 @@ PlayerSearchResult function RunPlayerSearch(
 
 string function TeamName(int team) {
     if (team == TEAM_IMC) {
-        return "imc"
+        return "IMC"
     } else if (team == TEAM_MILITIA) {
-        return "militia"
+        return "Militia"
     }
 
     return "???"
@@ -2478,21 +829,21 @@ string function PlayerSearchResultName(entity commandUser, PlayerSearchResult re
             return result.players[0].GetPlayerName()
 
         case PlayerSearchResultKind.ALL:
-            return "everyone"
+            return "Everyone"
 
         case PlayerSearchResultKind.US:
             if (IsFFAGame()) {
-                return "everyone"
+                return "Everyone"
             }
             int usTeam = commandUser.GetTeam()
-            return "team " + TeamName(usTeam)
+            return "Team " + TeamName(usTeam)
 
         case PlayerSearchResultKind.THEM:
             if (IsFFAGame()) {
-                return "everyone"
+                return "Everyone"
             }
             int themTeam = GetOtherTeam(commandUser.GetTeam())
-            return "team " + TeamName(themTeam)
+            return "Team " + TeamName(themTeam)
 
         default:
             break
@@ -2500,57 +851,25 @@ string function PlayerSearchResultName(entity commandUser, PlayerSearchResult re
     return ErrorColor("??? fvnhead pls fix ???")
 }
 
-void function Log(string s) {
-     print("[fvnkhead.mod] " + s)
-}
-
-void function Debug(string s) {
-    if (!file.debugEnabled) {
-        return
-    }
-
-    print("[fvnkhead.mod/debug] " + s)
-}
-
-string function ErrorColor(string s) {
-    return "\x1b[112m" + s
-}
-
-string function PrivateColor(string s) {
-    return "\x1b[111m" + s
-}
-
-string function AnnounceColor(string s) {
-    return "\x1b[95m" + s
-}
-
-string function White(string s) {
-    return "\x1b[0m" + s
-}
-
-string function Green(string s) {
-    return "\x1b[92m" + s
-}
-
-bool function IsAdmin(entity player) {
-    return file.adminUids.contains(player.GetUID())
-}
-
-bool function IsNonAuthenticatedAdmin(entity player) {
-    if (file.adminAuthEnabled) {
-        return IsAdmin(player) && !file.authenticatedAdmins.contains(player.GetUID())
-    }
-
-    return false
-}
-
-bool function IsAuthenticatedAdmin(entity player) {
-    if (file.adminAuthEnabled) {
-        return IsAdmin(player) && file.authenticatedAdmins.contains(player.GetUID())
-    }
-
-    return IsAdmin(player)
-}
+// string function ErrorColor(string s) {
+//     return "\x1b[112m" + s
+// }
+//
+// string function PrivateColor(string s) {
+//     return "\x1b[111m" + s
+// }
+//
+// string function AnnounceColor(string s) {
+//     return "\x1b[95m" + s
+// }
+//
+// string function White(string s) {
+//     return "\x1b[0m" + s
+// }
+//
+// string function Green(string s) {
+//     return "\x1b[92m" + s
+// }
 
 string function Join(array<string> list, string separator) {
     string s = ""
@@ -2619,27 +938,6 @@ array<entity> function FindPlayersBySubstring(string substring) {
     }
 
     return players
-}
-
-array<string> function FindMapsBySubstring(string substring) {
-    substring = substring.tolower()
-    array<string> maps = []
-    foreach (string mapKey, string mapName in MAP_NAME_TABLE) {
-        if (mapName.tolower().find(substring) != null) {
-            maps.append(mapKey)
-        }
-    }
-
-    return maps
-}
-
-bool function CanSwitchTeams(entity player) {
-    // ctf bug, flag can become other team flag so they have 2 flags
-    if (PlayerHasEnemyFlag(player)) {
-        return false
-    }
-
-    return true
 }
 
 bool function IsCTF() {

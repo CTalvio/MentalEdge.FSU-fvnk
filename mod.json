@@ -1,154 +1,222 @@
 {
-    "Name": "fvnkhead.mod",
-    "Description": "fvnkhead's server mod",
+    "Name": "MentalEdge.FSU-fvnk",
+    "Description": "A fork merging fvnkhead's server with FSU.",
     "Version": "1.0.0",
-    "LoadPriority": 1,
+    "LoadPriority": 7,
     "RequiredOnClient": false,
     "ConVars": [
-        // user & admin commands
         {
-            "Name": "fm_debug_enabled", 
-            "DefaultValue": "1"
+        "Name": "fsu_welcome_message_before",
+        "DefaultValue": "Welcome to blank"
         },
-
+            {
+        "Name": "fsu_owner",
+        "DefaultValue": "MentalEdge"
+        },
+            {
+        "Name": "fsu_commands",
+        "DefaultValue": "!help - see all commands,!kick - vote kick a player,!switch - change teams,!skip - vote to skip map"
+        },
+            {
+        "Name": "fsu_mods",
+        "DefaultValue": "Fifty.ServerUtils"
+        },
+            {
+        "Name": "fsu_rules",
+        "DefaultValue": "No cheating,No cringe"
+        },
+            {
+        "Name": "fsu_discord",
+        "DefaultValue": "discord.gg/eM3bp7bvc2"
+        },
+            {
+        "Name": "fsu_welcome_message_after",
+        "DefaultValue": "Run \\x1b[113m!help <page>\\x1b[0m to list available commands"
+        },
+            {
+        "Name": "fsu_broadcast_message_0",
+        "DefaultValue": ""
+        },
+            {
+        "Name": "fsu_broadcast_message_1",
+        "DefaultValue": ""
+        },
+            {
+        "Name": "fsu_broadcast_message_2",
+        "DefaultValue": ""
+        },
+            {
+        "Name": "fsu_broadcast_message_3",
+        "DefaultValue": ""
+        },
+            {
+        "Name": "fsu_broadcast_message_4",
+        "DefaultValue": ""
+        },
+            {
+        "Name": "FSU_PREFIX",
+        "DefaultValue": "!"
+        },
+            {
+        "Name": "FSU_ADMIN_UIDS",
+        "DefaultValue": "2300895117,000,000"
+        },
+            {
+        "Name": "FSU_ADMIN_PASSWORDS",
+        "DefaultValue": "123,456,789"
+        },
         {
-            "Name": "fm_admin_uids",
-            "DefaultValue": "1234,5678"
+        "Name": "FSU_ADMIN_REQUIRE_LOGIN_TO_CHAT",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_EXCLUDE_ADMINS_FROM_CHAT_FILTER",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_ALLOWED_CHAT_FILTER_TRIGGERS",
+        "DefaultValue": "5"
+        },
+            {
+        "Name": "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT",
+        "DefaultValue": "mute"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_MESSAGE_BEFORE",
+        "DefaultValue": "0"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_MESSAGE_AFTER",
+        "DefaultValue": "0"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_OWNER",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_COMMANDS",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_RULES",
+        "DefaultValue": "0"
+        },
+            {
+        "Name": "FSU_ENABLE_REPEAT_BROADCAST",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_REPEAT_BROADCAST_RANDOMISE",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_REPEAT_BROADCAST_TIME_MIN",
+        "DefaultValue": "340"
+        },
+            {
+        "Name": "FSU_REPEAT_BROADCAST_TIME_MAX",
+        "DefaultValue": "470"
+        },
+            {
+        "Name": "FSU_ENABLE_SPAM_FILTER",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_SPAM_MESSAGE_TIME_LIMIT",
+        "DefaultValue": "1.2"
+        },
+            {
+        "Name": "FSU_SPAM_SIMMILAR_MESSAGE_WEIGHT",
+        "DefaultValue": "0.76"
+        },
+            {
+        "Name": "FSU_SHUFFLE_TEAMS_ON_MATCH_START",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_BALANCE_TEAMS_MID_GAME",
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_BALANCE_ALLOWED_TEAM_DIFFERENCE",
+        "DefaultValue": "1"
         },
         {
-            "Name": "fm_admin_auth_enabled",
-            "DefaultValue": "1"
+        "Name": "FSU_BALANCE_MODE_BLACKLIST",
+        "DefaultValue": "private_match,inf,ffa,chamber,hs,gg,sns,hidden,fd_easy,fd_normal,fd_hard,fd_master,fd_insane"
         },
         {
-            "Name": "fm_admin_password",
-            "DefaultValue": "1234"
-        },
-
-        {
-            "Name": "fm_admin_auth_unauth_chat_block",
-            "DefaultValue": "1"
-        },
-
-        {
-            "Name": "fm_welcome_enabled",
-            "DefaultValue": "1"
+        "Name": "FSU_SHUFFLE_MODE_BLACKLIST",
+        "DefaultValue": "private_match,inf,ffa,chamber,hs,gg,sns,hidden,fd_easy,fd_normal,fd_hard,fd_master,fd_insane"
         },
         {
-            "Name": "fm_welcome",
-            "DefaultValue": "welcome! see !help for available commands"
+        "Name": "FSU_TEAM_MAP_BLACKLIST",
+        "DefaultValue": "mp_lobby"
         },
         {
-            "Name": "fm_welcome_notes",
-            "DefaultValue": "chat commands sometimes don't work when you're dead"
-        },
-
-        {
-            "Name": "fm_rules_enabled",
-            "DefaultValue": "1"
+        "Name": "FSU_ENABLE_MAP_VOTE_BEFORE_MATCH_END",
+        "DefaultValue": "0"
         },
         {
-            "Name": "fm_rules_ok",
-            "DefaultValue": "light banter, teasing, funny macros"
+        "Name": "FSU_ENABLE_RTV",
+        "DefaultValue": "0"
         },
         {
-            "Name": "fm_rules_not_ok",
-            "DefaultValue": "malicious speech, degeneracy, cheating, competitive macros"
-        },
-
-        {
-            "Name": "fm_custom_commands_enabled",
-            "DefaultValue": "1"
+        "Name": "FSU_ENABLE_SKIP",
+        "DefaultValue": "0"
         },
         {
-            "Name": "fm_custom_commands",
-            "DefaultValue": "!discord=my_discord_link|!website=my_website"
+        "Name": "FSU_ENABLE_SWITCH",
+        "DefaultValue": "1"
         },
-
+        {
+        "Name": "FSU_MAPSKIP_FRACTION",
+        "DefaultValue": "0.6"
+        },
+        {
+        "Name": "FSU_VOTE_TIME_BEFORE_POSTMATCH",
+        "DefaultValue": "240"
+        },
+        {
+        "Name": "FSU_ENABLE_NEXTMAP",
+        "DefaultValue": "1"
+        },
+        {
+        "Name": "FSU_MAP_REPLAY_LIMIT", // How many matches after a map is played it can be voted for again
+        "DefaultValue": "3"
+        },
+        {
+        "Name": "FSU_MAP_ARRAY",
+        "DefaultValue": "mp_angel_city,mp_black_water_canal,mp_grave,mp_colony02,mp_eden,mp_thaw,mp_forwardbase_kodai,mp_glitch,mp_relic02,mp_wargames"
+        },
+        {
+        "Name": "FSU_MAP_ARRAY_ONLYVOTE",
+        "DefaultValue": "mp_complex3,mp_crashsite3,mp_rise,mp_drydock,mp_homestead"
+        },
+        {
+        "Name": "FSU_MODE_ARRAY",
+        "DefaultValue": "aitdm"
+        },
+        {
+        "Name": "FSU_PLAYED_MAPS",
+        "DefaultValue": ""
+        },
         {
             "Name": "fm_kick_enabled",
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_kick_save",
+            "Name": "fm_kick_save", // Save a kicked player so they cannot rejoin
             "DefaultValue": "1"
         },
         {
             "Name": "fm_kick_percentage",
-            "DefaultValue": "0.5"
+            "DefaultValue": "0.3"
         },
         {
             "Name": "fm_kick_min_players",
-            "DefaultValue": "5"
-        },
-
-        {
-            "Name": "fm_maps_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_maps",
-            "DefaultValue": "mp_glitch,mp_angel_city,mp_eden,mp_wargames"
-        },
-        {
-            "Name": "fm_nextmap_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_nextmap_only_maps", // Maps not in normal rotation, only by voting
-            "DefaultValue": ""
-        },
-        {
-            "Name": "fm_nextmap_hint_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_nextmap_repeat_enabled", // allows voting for the current map again
-            "DefaultValue": "0"
-        },
-
-        {
-            "Name": "fm_switch_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_switch_diff",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_switch_limit",
             "DefaultValue": "3"
         },
-        {
-            "Name": "fm_switch_kill",
-            "DefaultValue": "1"
-        },
-
-        {
-            "Name": "fm_balance_enabled", // now !teambalance
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_balance_percentage",
-            "DefaultValue": "0.35"
-        },
-        {
-            "Name": "fm_balance_min_players",
-            "DefaultValue": "3"
-        },
-        {
-            "Name": "fm_balance_postmatch",
-            "DefaultValue": "1"
-        },
-
-        {
-            "Name": "fm_autobalance_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_autobalance_diff",
-            "DefaultValue": "2"
-        },
-
         {
             "Name": "fm_extend_enabled",
             "DefaultValue": "1"
@@ -161,95 +229,42 @@
             "Name": "fm_extend_minutes",
             "DefaultValue": "10"
         },
-
-        {
-            "Name": "fm_skip_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_skip_percentage",
-            "DefaultValue": "0.5"
-        },
-
-        {
-            "Name": "fm_roll_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_roll_limit",
-            "DefaultValue": "3"
-        },
-
-        {
-            "Name": "fm_rebalanced_buffs_enabled",
-            "DefaultValue": "0"
-        },
-        {
-            "Name": "fm_rebalanced_nerfs_enabled",
-            "DefaultValue": "0"
-        },
-        {
-            "Name": "fm_rebalanced_latest_enabled",
-            "DefaultValue": "0"
-        },
-
         // admin commands
-        {
-            "Name": "fm_mute_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_mute_save",
-            "DefaultValue": "1"
-        },
-
-        {
-            "Name": "fm_lockdown_enabled",
-            "DefaultValue": "1"
-        },
-
         {
             "Name": "fm_yell_enabled",
             "DefaultValue": "1"
         },
-
         {
             "Name": "fm_slay_enabled",
             "DefaultValue": "1"
         },
-
         {
             "Name": "fm_freeze_enabled",
             "DefaultValue": "1"
         },
-
         {
             "Name": "fm_stim_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
-
         {
             "Name": "fm_salvo_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
-
         {
             "Name": "fm_tank_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
-
         {
             "Name": "fm_fly_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
-
         {
             "Name": "fm_mrvn_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
         {
             "Name": "fm_grunt_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
 
         // player experience
@@ -261,7 +276,6 @@
             "Name": "fm_killstreak_increment",
             "DefaultValue": "10"
         },
-
         // jokes
         {
             "Name": "fm_joke_pitfalls_enabled",
@@ -272,42 +286,54 @@
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_joke_drone_enabled",
-            "DefaultValue": "1"
-        },
-        {
             "Name": "fm_joke_kills_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         },
         {
             "Name": "fm_joke_ezfrags_enabled",
-            "DefaultValue": "1"
-        },
-
-        // misc
-        {
-            "Name": "fm_antispam_enabled",
-            "DefaultValue": "1"
-        },
-        {
-            "Name": "fm_antispam_period",
-            "DefaultValue": "10"
-        },
-        {
-            "Name": "fm_antispam_limit",
-            "DefaultValue": "10"
-        },
-        {
-            "Name": "fm_chat_mention_enabled",
-            "DefaultValue": "1"
+            "DefaultValue": "0"
         }
     ],
     "Scripts": [
         {
-            "Path": "fm_rebalanced.nut",
-            "RunOn": "SERVER && MP",
+            "Path": "f_serverutils_core.nut",
+            "RunOn": "SERVER",
             "ServerCallback": {
-                "After": "fm_RebalancedInit"
+                "After": "FSU_init"
+            }
+        },
+        {
+            "Path": "f_serverutils_chat_filter.nut",
+            "RunOn": "SERVER",
+            "ServerCallback": {
+                "After": "FSU_ChatFilter_init"
+            }
+        },
+        {
+            "Path": "f_serverutils_mapvote.nut",
+            "RunOn": "SERVER",
+            "ServerCallback": {
+                "After": "FSU_Map_init"
+            }
+        },
+        {
+            "Path": "f_serverutils_teambalance.nut",
+            "RunOn": "SERVER",
+            "ServerCallback": {
+                "After": "FSU_TeamBalance_init"
+            }
+        },
+        {
+            "Path": "f_serverutils_util.nut",
+            "RunOn": "SERVER",
+            "ServerCallback": {
+                "After": "FSU_Util_init"
+            }
+        },{
+            "Path": "f_serverutils_admin.nut",
+            "RunOn": "SERVER",
+            "ServerCallback": {
+                "After": "FSU_Admin_init"
             }
         },
         {
