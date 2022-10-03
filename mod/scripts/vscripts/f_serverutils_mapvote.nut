@@ -52,7 +52,7 @@ void function FSU_Map_init (){
     }
 
     if ( FSU_GetBool("FSU_ENABLE_NEXTMAP") ) {
-        FSU_RegisterCommand( "nextmap", AccentOne( FSU_GetString("FSU_PREFIX") + "nextmap") + " - allow players to vote for what map to play next", "map", CommandNextMap,["nm","rtv","map","maps","rotation"] )
+        FSU_RegisterCommand( "nextmap", AccentOne( FSU_GetString("FSU_PREFIX") + "nextmap <map>") + " - allow players to vote for what map to play next", "map", CommandNextMap,["nm","rtv","map","maps"] )
     }
 
     if ( FSU_GetBool("FSU_ENABLE_SKIP") ){

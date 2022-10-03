@@ -1,24 +1,24 @@
 {
     "Name": "MentalEdge.FSU-fvnk",
-    "Description": "A fork merging fvnkhead's server with FSU.",
+    "Description": "A fork merging fvnkhead's server mod with FSU.",
     "Version": "1.0.0",
     "LoadPriority": 7,
     "RequiredOnClient": false,
     "ConVars": [
         {
-        "Name": "fsu_welcome_message_before",
-        "DefaultValue": "Welcome to blank"
+        "Name": "fsu_welcome_message_before", // The topmost line of the welcome message
+        "DefaultValue": "Welcome to @31mS@113mE@32mR@36mV@34mE@35mR@0m"
         },
             {
-        "Name": "fsu_owner",
+        "Name": "fsu_owner", // Server owner/host
         "DefaultValue": "MentalEdge"
         },
             {
-        "Name": "fsu_commands",
+        "Name": "fsu_commands", // Commands to list on join, keep this short
         "DefaultValue": "!help - see all commands,!kick - vote kick a player,!switch - change teams,!skip - vote to skip map"
         },
             {
-        "Name": "fsu_mods",
+        "Name": "fsu_mods", // List of installed mods
         "DefaultValue": "Fifty.ServerUtils"
         },
             {
@@ -30,16 +30,36 @@
         "DefaultValue": "discord.gg/eM3bp7bvc2"
         },
             {
-        "Name": "fsu_welcome_message_after",
-        "DefaultValue": "Run \\x1b[113m!help <page>\\x1b[0m to list available commands"
+        "Name": "fsu_welcome_message_after", // Last line of the welcome message, displayed below rules/commands
+        "DefaultValue": "Run @113m!help <page>@0m to list available commands"
         },
             {
-        "Name": "fsu_broadcast_message_0",
-        "DefaultValue": ""
+        "Name": "FSU_WELCOME_ENABLE_MESSAGE_BEFORE", // Enable/disable the initial welcome message line
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_MESSAGE_AFTER", // Enable/disable the final welcome message line
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_OWNER", // Enable/disable displaying owner on welcome
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_COMMANDS", // Enable/disable the final welcome message line
+        "DefaultValue": "1"
+        },
+            {
+        "Name": "FSU_WELCOME_ENABLE_RULES", // Enable/disable the final welcome message line
+        "DefaultValue": "0"
+        },
+            {
+        "Name": "fsu_broadcast_message_0", // Messages to broadcast throughout matches
+        "DefaultValue": "Run @113m!help <page>@0m to list available commands"
         },
             {
         "Name": "fsu_broadcast_message_1",
-        "DefaultValue": ""
+        "DefaultValue": "@38;5;147mTo submit a vote for which map to play next, use:@0m @38;5;147m!nextmap <map>@0m"
         },
             {
         "Name": "fsu_broadcast_message_2",
@@ -54,19 +74,19 @@
         "DefaultValue": ""
         },
             {
-        "Name": "FSU_PREFIX",
+        "Name": "FSU_PREFIX", // Command prefix, the standard is overwhelmingly ! so maybe keep that
         "DefaultValue": "!"
         },
             {
-        "Name": "FSU_ADMIN_UIDS",
+        "Name": "FSU_ADMIN_UIDS", // List UIDs that are admin
         "DefaultValue": "2300895117,000,000"
         },
             {
-        "Name": "FSU_ADMIN_PASSWORDS",
+        "Name": "FSU_ADMIN_PASSWORDS", // List passwords for each UID listed above
         "DefaultValue": "123,456,789"
         },
         {
-        "Name": "FSU_ADMIN_REQUIRE_LOGIN_TO_CHAT",
+        "Name": "FSU_ADMIN_REQUIRE_LOGIN_TO_CHAT", // Leaving this enable is recommended, as it prevents spoofers from impersonating you
         "DefaultValue": "1"
         },
             {
@@ -78,28 +98,8 @@
         "DefaultValue": "5"
         },
             {
-        "Name": "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT",
+        "Name": "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT", // Currently only "mute" is valid
         "DefaultValue": "mute"
-        },
-            {
-        "Name": "FSU_WELCOME_ENABLE_MESSAGE_BEFORE",
-        "DefaultValue": "0"
-        },
-            {
-        "Name": "FSU_WELCOME_ENABLE_MESSAGE_AFTER",
-        "DefaultValue": "0"
-        },
-            {
-        "Name": "FSU_WELCOME_ENABLE_OWNER",
-        "DefaultValue": "1"
-        },
-            {
-        "Name": "FSU_WELCOME_ENABLE_COMMANDS",
-        "DefaultValue": "1"
-        },
-            {
-        "Name": "FSU_WELCOME_ENABLE_RULES",
-        "DefaultValue": "0"
         },
             {
         "Name": "FSU_ENABLE_REPEAT_BROADCAST",
@@ -110,11 +110,11 @@
         "DefaultValue": "1"
         },
             {
-        "Name": "FSU_REPEAT_BROADCAST_TIME_MIN",
+        "Name": "FSU_REPEAT_BROADCAST_TIME_MIN", // Minimum time between broadcast messages
         "DefaultValue": "340"
         },
             {
-        "Name": "FSU_REPEAT_BROADCAST_TIME_MAX",
+        "Name": "FSU_REPEAT_BROADCAST_TIME_MAX", // Maximum time between broadcast messages
         "DefaultValue": "470"
         },
             {
@@ -129,44 +129,12 @@
         "Name": "FSU_SPAM_SIMMILAR_MESSAGE_WEIGHT",
         "DefaultValue": "0.76"
         },
-            {
-        "Name": "FSU_SHUFFLE_TEAMS_ON_MATCH_START",
-        "DefaultValue": "1"
-        },
-            {
-        "Name": "FSU_BALANCE_TEAMS_MID_GAME",
-        "DefaultValue": "1"
-        },
-            {
-        "Name": "FSU_BALANCE_ALLOWED_TEAM_DIFFERENCE",
+        {
+        "Name": "FSU_ENABLE_SKIP", // Enable map skip by vote
         "DefaultValue": "1"
         },
         {
-        "Name": "FSU_BALANCE_MODE_BLACKLIST",
-        "DefaultValue": "private_match,inf,ffa,chamber,hs,gg,sns,hidden,fd_easy,fd_normal,fd_hard,fd_master,fd_insane"
-        },
-        {
-        "Name": "FSU_SHUFFLE_MODE_BLACKLIST",
-        "DefaultValue": "private_match,inf,ffa,chamber,hs,gg,sns,hidden,fd_easy,fd_normal,fd_hard,fd_master,fd_insane"
-        },
-        {
-        "Name": "FSU_TEAM_MAP_BLACKLIST",
-        "DefaultValue": "mp_lobby"
-        },
-        {
-        "Name": "FSU_ENABLE_MAP_VOTE_BEFORE_MATCH_END",
-        "DefaultValue": "0"
-        },
-        {
-        "Name": "FSU_ENABLE_RTV",
-        "DefaultValue": "0"
-        },
-        {
-        "Name": "FSU_ENABLE_SKIP",
-        "DefaultValue": "0"
-        },
-        {
-        "Name": "FSU_ENABLE_SWITCH",
+        "Name": "FSU_ENABLE_SWITCH", // Enable teamswitching
         "DefaultValue": "1"
         },
         {
@@ -174,11 +142,7 @@
         "DefaultValue": "0.6"
         },
         {
-        "Name": "FSU_VOTE_TIME_BEFORE_POSTMATCH",
-        "DefaultValue": "240"
-        },
-        {
-        "Name": "FSU_ENABLE_NEXTMAP",
+        "Name": "FSU_ENABLE_NEXTMAP", // Enable voting for the next map
         "DefaultValue": "1"
         },
         {
@@ -186,23 +150,19 @@
         "DefaultValue": "3"
         },
         {
-        "Name": "FSU_MAP_ARRAY",
+        "Name": "FSU_MAP_ARRAY", // The maps you want in rotation
         "DefaultValue": "mp_angel_city,mp_black_water_canal,mp_grave,mp_colony02,mp_eden,mp_thaw,mp_forwardbase_kodai,mp_glitch,mp_relic02,mp_wargames"
         },
         {
-        "Name": "FSU_MAP_ARRAY_ONLYVOTE",
+        "Name": "FSU_MAP_ARRAY_ONLYVOTE", // Maps not in rotation, but which can still be played by vote
         "DefaultValue": "mp_complex3,mp_crashsite3,mp_rise,mp_drydock,mp_homestead"
         },
         {
-        "Name": "FSU_MODE_ARRAY",
-        "DefaultValue": "aitdm"
-        },
-        {
-        "Name": "FSU_PLAYED_MAPS",
+        "Name": "FSU_PLAYED_MAPS", // Leave as is, used for saving recently played maps
         "DefaultValue": ""
         },
         {
-            "Name": "fm_kick_enabled",
+            "Name": "fm_kick_enabled", // Enable kick command
             "DefaultValue": "1"
         },
         {
@@ -210,15 +170,15 @@
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_kick_percentage",
+            "Name": "fm_kick_percentage", // Percentage of players needed to vote for a kick
             "DefaultValue": "0.3"
         },
         {
-            "Name": "fm_kick_min_players",
+            "Name": "fm_kick_min_players", // How many players at least need to be on the server for kicking to be allowed
             "DefaultValue": "3"
         },
         {
-            "Name": "fm_extend_enabled",
+            "Name": "fm_extend_enabled", // Enable extend map by vote
             "DefaultValue": "1"
         },
         {
@@ -314,13 +274,6 @@
             "RunOn": "SERVER",
             "ServerCallback": {
                 "After": "FSU_Map_init"
-            }
-        },
-        {
-            "Path": "f_serverutils_teambalance.nut",
-            "RunOn": "SERVER",
-            "ServerCallback": {
-                "After": "FSU_TeamBalance_init"
             }
         },
         {

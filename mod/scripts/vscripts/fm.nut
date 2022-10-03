@@ -140,36 +140,36 @@ void function fm_Init() {
     }
 
     if (file.slayEnabled) {
-        FSU_RegisterCommand( "slay", AccentOne( FSU_GetString("FSU_PREFIX") + "slay <player | all | us | them>") + " - slay players.", "fvk", CommandSlay, [], IsLoggedIn )
+        FSU_RegisterCommand( "slay", AccentOne( FSU_GetString("FSU_PREFIX") + "slay <player/all/us/them>>") + " - slay players.", "fvk", CommandSlay, [], IsLoggedIn )
     }
 
     if (file.freezeEnabled) {
-        FSU_RegisterCommand( "freeze", AccentOne( FSU_GetString("FSU_PREFIX") + "freeze <player | all | us | them>") + " - freeze players.", "fvk", CommandFreeze, ["stop", "fr"], IsLoggedIn )
+        FSU_RegisterCommand( "freeze", AccentOne( FSU_GetString("FSU_PREFIX") + "freeze <player/all/us/them>>") + " - freeze players.", "fvk", CommandFreeze, ["stop", "fr"], IsLoggedIn )
     }
 
     if (file.stimEnabled) {
-        FSU_RegisterCommand( "stim", AccentOne( FSU_GetString("FSU_PREFIX") + "stim <player | all | us | them>") + " - give stim to players.", "fvk", CommandStim, ["speedyboi"], IsLoggedIn )
+        FSU_RegisterCommand( "stim", AccentOne( FSU_GetString("FSU_PREFIX") + "stim <player/all/us/them>") + " - give stim to players.", "fvk", CommandStim, ["speedyboi"], IsLoggedIn )
     }
 
     if (file.salvoEnabled) {
-        FSU_RegisterCommand( "salvo", AccentOne( FSU_GetString("FSU_PREFIX") + "salvo <player | all | us | them>") + " - give flight core to players.", "fvk", CommandSalvo, [], IsLoggedIn )
+        FSU_RegisterCommand( "salvo", AccentOne( FSU_GetString("FSU_PREFIX") + "salvo <player/all/us/them>") + " - give flight core to players.", "fvk", CommandSalvo, [], IsLoggedIn )
     }
 
     if (file.tankEnabled) {
-        FSU_RegisterCommand( "tank", AccentOne( FSU_GetString("FSU_PREFIX") + "tank <player | all | us | them>") + " - make players tanky.", "fvk", CommandTank, [], IsLoggedIn )
+        FSU_RegisterCommand( "tank", AccentOne( FSU_GetString("FSU_PREFIX") + "tank <player/all/us/them>") + " - make players tanky.", "fvk", CommandTank, [], IsLoggedIn )
     }
 
     if (file.flyEnabled) {
-        FSU_RegisterCommand( "fly", AccentOne( FSU_GetString("FSU_PREFIX") + "fly <player | all | us | them>") + " - make players floaty.", "fvk", CommandFly, [], IsLoggedIn )
-        FSU_RegisterCommand( "unfly", AccentOne( FSU_GetString("FSU_PREFIX") + "unfly <player | all | us | them>") + " - make players not floaty.", "fvk", CommandUnfly, [], IsLoggedIn )
+        FSU_RegisterCommand( "fly", AccentOne( FSU_GetString("FSU_PREFIX") + "fly <player/all/us/them>") + " - make players floaty.", "fvk", CommandFly, [], IsLoggedIn )
+        FSU_RegisterCommand( "unfly", AccentOne( FSU_GetString("FSU_PREFIX") + "unfly <player/all/us/them>") + " - make players not floaty.", "fvk", CommandUnfly, [], IsLoggedIn )
     }
 
     if (file.mrvnEnabled) {
-        FSU_RegisterCommand( "mrvn", AccentOne( FSU_GetString("FSU_PREFIX") + "mrvn <player | all | us | them>") + " - spawn a marvin.", "fvk", CommandMrvn, ["marvin"], IsLoggedIn )
+        FSU_RegisterCommand( "mrvn", AccentOne( FSU_GetString("FSU_PREFIX") + "mrvn <player/all/us/them>") + " - spawn a marvin.", "fvk", CommandMrvn, ["marvin"], IsLoggedIn )
     }
 
     if (file.gruntEnabled) {
-        FSU_RegisterCommand( "grunt", AccentOne( FSU_GetString("FSU_PREFIX") + "grunt <player | all | us | them>") + " - spawn a grunt.", "fvk", CommandGrunt, [], IsLoggedIn )
+        FSU_RegisterCommand( "grunt", AccentOne( FSU_GetString("FSU_PREFIX") + "grunt <player/all/us/them>") + " - spawn a grunt.", "fvk", CommandGrunt, [], IsLoggedIn )
     }
 
 

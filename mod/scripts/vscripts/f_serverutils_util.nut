@@ -7,7 +7,6 @@ global function FSU_GetBool
 global function FSU_GetFloat
 global function FSU_GetArray
 global function FSU_GetString
-global function FSU_Split
 global function FSU_GetStringArray
 
 // My version of convars :)
@@ -75,50 +74,22 @@ bool function FSU_GetBool( string convar )
   return GetConVarBool( convar )
 }
 
-// I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this I hate this
-array<string> function FSU_Split ( string splitme, string separator )
-{
-  array<string> return_array
-  string temp_string = splitme
-  
-  var last_index = 0
-  var temp_index = 0
-  while ( true )
-  {
-    temp_index = temp_string.find( separator )
-    
-    if( temp_index == null )
-      break
-    
-    
-    temp_string = temp_string.slice( 0, temp_index ) + temp_string.slice( temp_index + separator.len() , temp_string.len() )
-    
-    return_array.append( temp_string.slice( last_index, temp_index ) )
-    
-    last_index = temp_index
-  }
-  
-  if ( return_array.len() == 0 )
-    return_array.append( splitme )
-  
-  return return_array
-}
+string function FSU_GetString( string convar ){
+  array <string> split_array = split(GetConVarString( convar ),"%")
+  string return_value = ""
 
-string function FSU_GetString( string convar )
-{
-  string real_value = GetConVarString( convar )
-  array<string> split_value = FSU_Split(real_value,"\\x1b")
-  string return_value
-  
-  
-  foreach ( _index, string value in split_value )
-  {
-    return_value += value
-    
-    if( _index != split_value.len() - 1 )
-      return_value += "\x1b"
+  foreach (string snippet in split_array ){
+    if( return_value == "" ){
+      return_value = snippet
+    }
+    else{
+      return_value += "\x1b[38;5;" + snippet
+    }
   }
-  print( return_value )
+  if( GetConVarString( convar ).find("%") == 0 ){
+    return_value = "\x1b[38;5;" + return_value
+  }
+
   return return_value
 }
 

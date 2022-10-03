@@ -37,15 +37,14 @@ void function FSU_init ()
   AddCallback_OnClientConnected ( OnClientConnected )
   
   // Register commands
-  FSU_RegisterCommand( "help", AccentOne( FSU_GetString("FSU_PREFIX") + "help <page>") + " - ists registered commands.", "core", FSU_C_Help, [ "h","commands" ] )
-  FSU_RegisterCommand( "name", AccentOne( FSU_GetString("FSU_PREFIX") + "name") + " - returns the name of the current server.", "core", FSU_C_Name )
-  FSU_RegisterCommand( "owner", AccentOne( FSU_GetString("FSU_PREFIX") + "owner") + " - returns the name of the owner if provided.", "core", FSU_C_Owner )
+  FSU_RegisterCommand( "help", AccentOne( FSU_GetString("FSU_PREFIX") + "help <page/command>") + " - list a page of commands or display the instructions for one", "core", FSU_C_Help, [ "h","usage","command","commands" ] )
+  FSU_RegisterCommand( "name", AccentOne( FSU_GetString("FSU_PREFIX") + "name") + " - returns the name of the current server", "core", FSU_C_Name,["server"] )
+  FSU_RegisterCommand( "owner", AccentOne( FSU_GetString("FSU_PREFIX") + "owner") + " - returns the name of the owner if provided", "core", FSU_C_Owner,["host"] )
   FSU_RegisterCommand( "mods", AccentOne( FSU_GetString("FSU_PREFIX") + "mods <page>") + " - lists mods on server. This has to be manually updated and may not be up to date!","core", FSU_C_Mods )
-  FSU_RegisterCommand( "rules", AccentOne( FSU_GetString("FSU_PREFIX") + "rules <page>") + " - lists rules.", "core", FSU_C_Rules)
-  FSU_RegisterCommand( "vote", AccentOne( FSU_GetString("FSU_PREFIX") + "vote <number>") + "  - allows you to vote on polls.", "core", FSU_C_Vote )
-  FSU_RegisterCommand( "usage", AccentOne( FSU_GetString("FSU_PREFIX") + "usage <command>") + " - prints usage of provided command.", "core", FSU_C_Usage )
-  FSU_RegisterCommand( "discord", AccentOne( FSU_GetString("FSU_PREFIX") + "discord") + " - prints a discord invite.", "core", FSU_C_Discord, [ "dc" ] )
-  FSU_RegisterCommand( "report", AccentOne( FSU_GetString("FSU_PREFIX") + "report <player>") + " - creates a report and prints it in console so you can copy it.", "core", FSU_C_Report )
+  FSU_RegisterCommand( "rules", AccentOne( FSU_GetString("FSU_PREFIX") + "rules <page>") + " - lists rules", "core", FSU_C_Rules)
+  FSU_RegisterCommand( "vote", AccentOne( FSU_GetString("FSU_PREFIX") + "vote <number>") + "  - allows you to vote on polls", "core", FSU_C_Vote )
+  FSU_RegisterCommand( "discord", AccentOne( FSU_GetString("FSU_PREFIX") + "discord") + " - prints a discord invite", "core", FSU_C_Discord, [ "dc" ] )
+  FSU_RegisterCommand( "report", AccentOne( FSU_GetString("FSU_PREFIX") + "report <player>") + " - creates a report and prints it in console so you can copy it", "core", FSU_C_Report )
   if( FSU_GetBool("FSU_ENABLE_SWITCH") )
     FSU_RegisterCommand( "switch", AccentOne( FSU_GetString("FSU_PREFIX") + "switch") + " - switches your team", "core", FSU_C_Switch )
   
@@ -64,7 +63,7 @@ void function OnClientConnected ( entity player )
   string msg_hosted_by
   if( FSU_GetBool( "FSU_WELCOME_ENABLE_OWNER" ) )
   {
-    msg_hosted_by += "Hosted by: " + UsernameColor(FSU_GetString("fsu_owner"))
+    msg_hosted_by += AnnounceColor("Hosted by: ") + UsernameColor(FSU_GetString("fsu_owner"))
     Chat_ServerPrivateMessage( player, msg_hosted_by, false )
   }
   
@@ -73,31 +72,32 @@ void function OnClientConnected ( entity player )
   string msg_commands
   if( FSU_GetBool( "FSU_WELCOME_ENABLE_COMMANDS" ) )
   {
-    msg_commands += "Commands:"
+    msg_commands += AnnounceColor("Commands:")
     foreach ( cmd in FSU_GetStringArray("fsu_commands") )
     {
       if( list_count > 4 )
         break
       
-      msg_commands += "\n    - " + AccentOne(cmd)
+      msg_commands += "\n  - " + AccentOne(cmd)
       
       list_count++
     }
     
     Chat_ServerPrivateMessage( player, msg_commands, false )
   }
-  
+
+  list_count = 0
   string msg_rules
   if( FSU_GetBool( "FSU_WELCOME_ENABLE_RULES" ) )
   {
-    msg_rules += "Rules:"
-    foreach ( _index, rule in FSU_GetStringArray("fsu_rules") )
+    msg_rules += AnnounceColor("Rules:")
+    foreach ( rule in FSU_GetStringArray("fsu_rules") )
     {
       if( list_count > 4 )
         break
       
-      msg_rules += "\n    \x1b[113m" + ( _index + 1 ) + ".\x1b[0m " + rule
-      
+      msg_rules += "\n  - " + AdminColor(rule)
+
       list_count++
     }
     
@@ -340,6 +340,11 @@ bool function FSU_IsDedicated()
 // !help
 void function FSU_C_Help ( entity player, array < string > args )
 {
+  if(args.len() != 0 && args[0].len() > 1 ){
+    FSU_C_Usage(player, args)
+    return
+  }
+
   string returnMessage
   int page
   
@@ -378,7 +383,7 @@ void function FSU_C_Help ( entity player, array < string > args )
   }
   
   Chat_ServerPrivateMessage( player, "Commands, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
-  Chat_ServerPrivateMessage( player, "Run " + AccentOne("!usage <command>") + " to see what a command is for.", false )
+  Chat_ServerPrivateMessage( player, "Run " + AccentOne("!help <command>") + " to see what a command is for.", false )
 }
 
 // !rules
@@ -514,13 +519,22 @@ void function FSU_C_Vote ( entity player, array < string > args )
 // !usage
 void function FSU_C_Usage ( entity player, array < string > args )
 {
-  if ( args.len() == 0 )
-  {
-    Chat_ServerPrivateMessage( player, "Usage: " + AccentOne("!usage <command>"), false )
-    return
-  }
-  
   string cmd = args[0].find( FSU_GetString("FSU_PREFIX") ) == 0 ? args[0].tolower() : FSU_GetString("FSU_PREFIX") + args[0].tolower()
+
+  // check if cmd matches an abbreviation/alias
+  foreach ( command, cmdStruct in commands ){
+    foreach ( abv in cmdStruct.abbreviations ){
+      if ( FSU_GetString("FSU_PREFIX") + abv == cmd )
+      {
+        if( cmdStruct.visible != null && !cmdStruct.visible( player ) )
+        {
+          Chat_ServerPrivateMessage( player, ErrorColor("Unknown command passed in!"), false )
+          return
+        }
+        cmd = command
+      }
+    }
+  }
   
   if ( cmd in commands && commands[ cmd ].visible != null && !commands[ cmd ].visible( player ) )
   {
@@ -535,13 +549,14 @@ void function FSU_C_Usage ( entity player, array < string > args )
     return
   }
 
+  // Appends abbreviations if there are any
   if ( commands[ cmd ].abbreviations.len() == 0 )
     return
   
   string abbFinal
   foreach ( _index, abb in commands[ cmd ].abbreviations )
     abbFinal += _index == 0 ? AccentOne( FSU_GetString("FSU_PREFIX") + abb) : ", " + AccentOne( FSU_GetString("FSU_PREFIX") + abb)
-  Chat_ServerPrivateMessage( player, "Abbreviations: " + abbFinal, false )
+  Chat_ServerPrivateMessage( player, "Aliases: " + abbFinal, false )
 }
 
 
@@ -561,6 +576,23 @@ bool function IsValidVoteInt( string arg, int max )
 // !switch
 void function FSU_C_Switch ( entity player, array < string > args )
 {
+
+  // check if admin, logged in, and switching the team of someone else
+  if (args.len() > 0 && IsLoggedIn(player)){
+    foreach ( p in GetPlayerArray() )
+    {
+      if( p.GetPlayerName().tolower().find( args[0].tolower() ) != null )
+      {
+        SetTeam( p, GetOtherTeam( p.GetTeam() ) )
+        Chat_ServerPrivateMessage( player, AdminColor("Switched ") + UsernameColor(p.GetPlayerName()+"'s") + AdminColor(" team!"), false )
+        Chat_ServerPrivateMessage( player, AdminColor("Your team has been switched by an admin."), false )
+        return
+      }
+    }
+    Chat_ServerPrivateMessage( player, ErrorColor("Couldn't find a player matching ") + UsernameColor(args[0]) + ErrorColor("!"), false)
+    return
+  }
+
   if ( GetGameState() != eGameState.Playing )
   {
     Chat_ServerPrivateMessage( player, ErrorColor("Can't switch in this game state"), false )

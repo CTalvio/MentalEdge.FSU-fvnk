@@ -13,7 +13,7 @@ void function FSU_Admin_init()
   AddCallback_OnClientConnected(Lockdown_OnPlayerConnected)
   AddCallback_OnClientConnected(Lockdown_OnPlayerConnected)
 
-  FSU_RegisterCommand( "login", AccentOne( FSU_GetString("FSU_PREFIX") + "login <password>") + " - login as admin", "admin", FSU_C_Login, [], CanBeAdmin )
+  FSU_RegisterCommand( "login", AccentOne( FSU_GetString("FSU_PREFIX") + "login <password>") + " - login as admin", "admin", FSU_C_Login, ["auth"], CanBeAdmin )
   FSU_RegisterCommand( "logout", AccentOne( FSU_GetString("FSU_PREFIX") + "logout") + " - logout", "admin", FSU_C_Logout, [], IsLoggedIn )
   FSU_RegisterCommand( "mute", AccentOne( FSU_GetString("FSU_PREFIX") + "mute <player>") + " - to mute player", "admin", FSU_C_Mute, [], IsLoggedIn )
   FSU_RegisterCommand( "unmute", AccentOne( FSU_GetString("FSU_PREFIX") + "unmute <player>") + " - to unmute player", "admin", FSU_C_Unmute, [], IsLoggedIn )
