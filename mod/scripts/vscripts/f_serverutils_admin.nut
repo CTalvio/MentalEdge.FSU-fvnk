@@ -206,7 +206,7 @@ void function FSU_C_Mute ( entity player, array < string > args )
     {
       FSU_Mute( p.GetUID() )
       Chat_ServerPrivateMessage( player, AdminColor("Muted ") + UsernameColor(p.GetPlayerName()) + AdminColor("!"), false )
-      Chat_ServerPrivateMessage( p, AdminColor("You were muted!"), false )
+      Chat_ServerPrivateMessage( p, ErrorColor("You were muted!"), false )
       return
     }
   }

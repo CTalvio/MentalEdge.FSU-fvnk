@@ -58,7 +58,7 @@ void function FSU_init ()
 void function OnClientConnected ( entity player )
 {
   if( FSU_GetBool( "FSU_WELCOME_ENABLE_MESSAGE_BEFORE" ) )
-    Chat_ServerPrivateMessage( player, FSU_GetString("fsu_welcome_message_before"), false )
+    Chat_ServerPrivateMessage( player, baseTextColor + FSU_GetString("fsu_welcome_message_before"), false )
   
   string msg_hosted_by
   if( FSU_GetBool( "FSU_WELCOME_ENABLE_OWNER" ) )
@@ -105,7 +105,7 @@ void function OnClientConnected ( entity player )
   }
   
   if ( FSU_GetBool( "FSU_WELCOME_ENABLE_MESSAGE_AFTER" ) )
-    Chat_ServerPrivateMessage( player, FSU_GetString("fsu_welcome_message_after"), false )
+    Chat_ServerPrivateMessage( player, baseTextColor + FSU_GetString("fsu_welcome_message_after"), false )
   
   
   // If a poll is active try to show it to late joiners
@@ -218,7 +218,7 @@ void function RepeatBroadcastMessages_Threaded ()
     if( FSU_GetBool( "FSU_REPEAT_BROADCAST_RANDOMISE" ) )
       index = RandomInt( messages.len() )
     
-    Chat_ServerBroadcast( messages[ index ] )
+    Chat_ServerBroadcast( baseTextColor + messages[ index ] )
     
     index++
     if ( index >= messages.len() )
@@ -382,8 +382,8 @@ void function FSU_C_Help ( entity player, array < string > args )
     _index++
   }
   
-  Chat_ServerPrivateMessage( player, "Commands, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
-  Chat_ServerPrivateMessage( player, "Run " + AccentOne("!help <command>") + " to see what a command is for.", false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Commands, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Run " + AccentOne("!help <command>") + baseTextColor + " to see what a command is for.", false )
 }
 
 // !rules
@@ -420,19 +420,19 @@ void function FSU_C_Rules ( entity player, array < string > args )
     _index++
   }
   
-  Chat_ServerPrivateMessage( player, "Rules, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Rules, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
 }
 
 // !owner
 void function FSU_C_Owner ( entity player, array < string > args )
 {
-  Chat_ServerPrivateMessage( player, "Owner: " + UsernameColor(FSU_GetString("fsu_owner")), false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Owner: " + UsernameColor(FSU_GetString("fsu_owner")), false )
 }
 
 // !name
 void function FSU_C_Name ( entity player, array < string > args )
 {
-  Chat_ServerPrivateMessage( player, "Server name: " + AccentTwo(GetConVarString("ns_server_name")), false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Server name: " + AccentTwo(GetConVarString("ns_server_name")), false )
 }
 
 // !mods
@@ -469,13 +469,13 @@ void function FSU_C_Mods ( entity player, array < string > args )
     _index++
   }
 
-  Chat_ServerPrivateMessage( player, "Mods, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Mods, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
 }
 
 // !discord
 void function FSU_C_Discord ( entity player, array < string > args )
 {
-  Chat_ServerPrivateMessage( player, "Join our discord: " + UsernameColor(FSU_GetString("fsu_discord")), false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Join our discord: " + UsernameColor(FSU_GetString("fsu_discord")), false )
 }
 
 // !vote
@@ -542,7 +542,7 @@ void function FSU_C_Usage ( entity player, array < string > args )
     return
   }
   if ( cmd in commands )
-    Chat_ServerPrivateMessage( player, "Usage: " + commands[ cmd ].usage, false )
+    Chat_ServerPrivateMessage( player, baseTextColor + "Usage: " + commands[ cmd ].usage, false )
   else
   {
     Chat_ServerPrivateMessage( player, ErrorColor("Unknown command passed in!"), false )
@@ -556,7 +556,7 @@ void function FSU_C_Usage ( entity player, array < string > args )
   string abbFinal
   foreach ( _index, abb in commands[ cmd ].abbreviations )
     abbFinal += _index == 0 ? AccentOne( FSU_GetString("FSU_PREFIX") + abb) : ", " + AccentOne( FSU_GetString("FSU_PREFIX") + abb)
-  Chat_ServerPrivateMessage( player, "Aliases: " + abbFinal, false )
+  Chat_ServerPrivateMessage( player, baseTextColor + "Aliases: " + abbFinal, false )
 }
 
 
@@ -619,7 +619,7 @@ void function FSU_C_Report ( entity player, array < string > args )
 {
   if ( args.len() == 0 )
   {
-    Chat_ServerPrivateMessage( player, "Usage: " + AccentOne("!report <player>"), false )
+    Chat_ServerPrivateMessage( player, baseTextColor + "Usage: " + AccentOne("!report <player>"), false )
     return
   }
   

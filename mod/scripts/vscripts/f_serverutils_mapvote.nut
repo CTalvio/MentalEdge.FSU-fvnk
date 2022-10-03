@@ -234,16 +234,16 @@ array<string> function AllMaps() {
 void function CommandNextMap(entity player, array<string> args) {
     if (args.len() == 0){
         string mapsInRotation = MapsString(file.maps)
-        Chat_ServerPrivateMessage(player, "Maps in rotation:" + "\n" + AccentTwo(mapsInRotation), false)
+        Chat_ServerPrivateMessage(player, baseTextColor + "Maps in rotation:" + "\n" + AccentTwo(mapsInRotation), false)
         if (file.nextMapOnlyMaps.len() > 0) {
             string voteOnlyMaps = MapsString(file.nextMapOnlyMaps)
-            Chat_ServerPrivateMessage(player, "Maps by vote only:" + "\n" + AdminColor(voteOnlyMaps), false)
+            Chat_ServerPrivateMessage(player, baseTextColor + "Maps by vote only:" + "\n" + AdminColor(voteOnlyMaps), false)
         }
         if (split(GetConVarString("FSU_PLAYED_MAPS"), ",").len() > 0) {
             string voteOnlyMaps = MapsString(split(GetConVarString("FSU_PLAYED_MAPS"), ","))
-            Chat_ServerPrivateMessage(player, "Last maps played (not vote-able):" + "\n" + ErrorColor(voteOnlyMaps), false)
+            Chat_ServerPrivateMessage(player, baseTextColor + "Last maps played (not vote-able):" + "\n" + ErrorColor(voteOnlyMaps), false)
         }
-        Chat_ServerPrivateMessage(player, "Use " + AccentOne("!nm <map>") + " to vote for the next map.", false)
+        Chat_ServerPrivateMessage(player, baseTextColor + "Use " + AccentOne("!nm <map>") + " to vote for the next map.", false)
         return
     }
 

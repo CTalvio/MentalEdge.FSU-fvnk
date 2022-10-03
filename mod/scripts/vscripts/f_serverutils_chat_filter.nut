@@ -53,7 +53,7 @@ bool function ShouldBlock( entity player, string message )
 {
   if( FSU_IsMuted( player.GetUID() ) )
   {
-    Chat_ServerPrivateMessage( player, "You are muted!", false )
+    Chat_ServerPrivateMessage( player, ErrorColor("You are muted!"), false )
     return true
   }
   
@@ -62,7 +62,7 @@ bool function ShouldBlock( entity player, string message )
   
   if ( Time() - message_cache[ player.GetUID() ][ message_cache[ player.GetUID() ].len() - 1 ].time < FSU_GetFloat( "FSU_SPAM_MESSAGE_TIME_LIMIT" ) )
   {
-    Chat_ServerPrivateMessage( player, "Whoah there! You're sending messages too fast!", false )
+    Chat_ServerPrivateMessage( player, ErrorColor("Whoah there! You're sending messages too fast!"), false )
     if( player.GetUID() in player_triggers )
       player_triggers[ player.GetUID() ]++
     else
@@ -73,7 +73,7 @@ bool function ShouldBlock( entity player, string message )
       if ( FSU_GetString( "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT" ) == "mute" )
       {
         FSU_Mute( player.GetUID() )
-        Chat_ServerPrivateMessage( player, "You were muted for spam!", false )
+        Chat_ServerPrivateMessage( player, ErrorColor("You were muted for spam!"), false )
       }
     }
     return true
@@ -95,7 +95,7 @@ bool function ShouldBlock( entity player, string message )
   
   if ( sameness > FSU_GetFloat( "FSU_SPAM_SIMMILAR_MESSAGE_WEIGHT" ) )
   {
-    Chat_ServerPrivateMessage( player, "Message too similar!", false )
+    Chat_ServerPrivateMessage( player, ErrorColor("Message too similar!"), false )
     if( player.GetUID() in player_triggers )
       player_triggers[ player.GetUID() ]++
     else
@@ -106,7 +106,7 @@ bool function ShouldBlock( entity player, string message )
       if ( FSU_GetString( "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT" ) == "mute" )
       {
         FSU_Mute( player.GetUID() )
-        Chat_ServerPrivateMessage( player, "You were muted for spam!", false )
+        Chat_ServerPrivateMessage( player, ErrorColor("You were muted for spam!"), false )
       }
     }
     return true
