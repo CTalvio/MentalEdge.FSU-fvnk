@@ -259,6 +259,11 @@ void function CommandKick(entity player, array<string> args) {
         return
     }
 
+    // check if admin
+    if (CanBeAdmin(player)){
+        SendMessage(player, AdminColor("You are admin, you can force kick: ") + AccentOne("!kick " + args[0] + " force"))
+    }
+
     if (GetPlayerArray().len() < file.kickMinPlayers) {
         // TODO: store into kicktable anyway?
         SendMessage(player, ErrorColor("Not enough players for vote kick!") + "At least " + file.kickMinPlayers + " are needed!")
