@@ -8,6 +8,11 @@ global function FSU_GetFloat
 global function FSU_GetArray
 global function FSU_GetString
 global function FSU_GetStringArray
+global function FSU_SaveArrayToConVar
+global function FSU_GetArrayFromConVar
+global function FSU_GetSettingIntFromConVar
+global function FSU_GetSecondaryArrayFromConVar
+
 
 // My version of convars :)
 global table<string,string> fsu_local_strings
@@ -47,6 +52,36 @@ void function FSU_Util_init ()
   fsu_local_strings["mp_box"]                      <- "Box"
   fsu_local_strings["mp_amongus"]                  <- "Amongus"
 }
+
+int function FSU_GetSettingIntFromConVar(string convar){
+ return split(GetConVarString(convar), ",")[0].tointeger()
+}
+
+array <string> function FSU_GetArrayFromConVar(string convar){
+  array <string> convarArray = split(GetConVarString(convar), ",")
+  convarArray.remove(0)
+  return convarArray
+}
+
+void function FSU_SaveArrayToConVar(string convar, array <string> input){
+  if(GetConVarString(convar) == "0")
+    return
+
+  string newContent = split(GetConVarString(convar), ",")[0]
+  foreach(string item in input){
+    newContent += "," + item
+  }
+  SetConVarString(convar, newContent)
+}
+
+array <string> function FSU_GetSecondaryArrayFromConVar(string convar, int whichArray){
+  array <string> convarArray
+  foreach(string item in FSU_GetArrayFromConVar(convar)){
+    convarArray.append(split(item, "-")[whichArray])
+  }
+  return convarArray
+}
+
 
 // Local for maps
 string function FSU_Localize( string map )

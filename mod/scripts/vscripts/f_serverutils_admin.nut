@@ -10,17 +10,29 @@ array<string> loggedin_admins
 
 void function FSU_Admin_init()
 {
-  AddCallback_OnClientConnected(Lockdown_OnPlayerConnected)
-  AddCallback_OnClientConnected(Lockdown_OnPlayerConnected)
+  AddCallback_OnClientConnected(OnPlayerConnected)
+  AddCallback_OnClientDisconnected(LogOutOnDisconnect)
 
-  FSU_RegisterCommand( "login", AccentOne( FSU_GetString("FSU_PREFIX") + "login <password>") + " - login as admin", "admin", FSU_C_Login, ["auth"], CanBeAdmin )
-  FSU_RegisterCommand( "logout", AccentOne( FSU_GetString("FSU_PREFIX") + "logout") + " - logout", "admin", FSU_C_Logout, [], IsLoggedIn )
-  FSU_RegisterCommand( "mute", AccentOne( FSU_GetString("FSU_PREFIX") + "mute <player>") + " - to mute player", "admin", FSU_C_Mute, [], IsLoggedIn )
-  FSU_RegisterCommand( "unmute", AccentOne( FSU_GetString("FSU_PREFIX") + "unmute <player>") + " - to unmute player", "admin", FSU_C_Unmute, [], IsLoggedIn )
-  FSU_RegisterCommand( "kick", AccentOne( FSU_GetString("FSU_PREFIX") + "kick <player>") + " - to kick player", "admin", FSU_C_Kick, [], IsLoggedIn )
-  FSU_RegisterCommand( "kill", AccentOne( FSU_GetString("FSU_PREFIX") + "kill <player>") + "- to kill player", "admin", FSU_C_Kill, [], IsLoggedIn )
-  FSU_RegisterCommand( "ban", AccentOne( FSU_GetString("FSU_PREFIX") + "ban <player>") + " - to ban player", "admin", FSU_C_Ban, [], IsLoggedIn )
-  FSU_RegisterCommand( "lockdown", AccentOne( FSU_GetString("FSU_PREFIX") + "lockdown <up/down>") + " - to prevent/enable players joining the game", "admin", FSU_C_Lockdown, ["quarantine", "lock"], IsLoggedIn )
+  if(FSU_GetSettingIntFromConVar("FSU_ADMIN_LOGIN_PERSISTENCE") == 1){
+    loggedin_admins = FSU_GetArrayFromConVar("FSU_ADMIN_LOGIN_PERSISTENCE")
+    thread LogoutDisconnectedAdmins()
+  }
+
+  FSU_RegisterCommand( "login", AccentOne( FSU_GetString("FSU_PREFIX") + "login <password>") + " - login as admin.", "admin", FSU_C_Login, ["auth"], CanBeAdmin )
+  FSU_RegisterCommand( "logout", AccentOne( FSU_GetString("FSU_PREFIX") + "logout") + " - logout.", "admin", FSU_C_Logout, [], IsLoggedIn )
+  FSU_RegisterCommand( "mute", AccentOne( FSU_GetString("FSU_PREFIX") + "mute <player>") + " - to mute player.", "admin", FSU_C_Mute, [], IsLoggedIn )
+  FSU_RegisterCommand( "unmute", AccentOne( FSU_GetString("FSU_PREFIX") + "unmute <player>") + " - to unmute player.", "admin", FSU_C_Unmute, [], IsLoggedIn )
+  FSU_RegisterCommand( "kick", AccentOne( FSU_GetString("FSU_PREFIX") + "kick <player>") + " - to kick player.", "admin", FSU_C_Kick, [], IsLoggedIn )
+  FSU_RegisterCommand( "kill", AccentOne( FSU_GetString("FSU_PREFIX") + "kill <player>") + "- to kill player.", "admin", FSU_C_Kill, [], IsLoggedIn )
+  FSU_RegisterCommand( "ban", AccentOne( FSU_GetString("FSU_PREFIX") + "ban <player>") + " - to ban player.", "admin", FSU_C_Ban, [], IsLoggedIn )
+  FSU_RegisterCommand( "lockdown", AccentOne( FSU_GetString("FSU_PREFIX") + "lockdown <up/down>") + " - to prevent/enable players joining the game.", "admin", FSU_C_Lockdown, ["quarantine", "lock"], IsLoggedIn )
+
+  if (GetConVarInt("FSU_GETUID_ADMIN") == 1){
+    FSU_RegisterCommand( "getuid", AccentOne( FSU_GetString("FSU_PREFIX") + "getuid <player>") + " - get the UID of a player.", "admin", FSU_C_GetUID, ["uid"], IsLoggedIn )
+  }
+  else{
+    FSU_RegisterCommand( "getuid", AccentOne( FSU_GetString("FSU_PREFIX") + "getuid <player>") + " - get the UID of a player.", "admin", FSU_C_GetUID, ["uid"] )
+  }
 }
 
 bool function CanBeAdmin( entity player )
@@ -46,6 +58,21 @@ bool function IsLoggedIn( entity player )
   return false
 }
 
+void function LogOutOnDisconnect(entity player){
+  Logout(player)
+}
+
+void function LogoutDisconnectedAdmins(){
+  wait 5
+  array <string> stillPresent
+  foreach(string uid in loggedin_admins)
+    foreach(entity player in GetPlayerArray())
+      if(player.GetUID() == uid)
+        stillPresent.append(uid)
+
+  loggedin_admins = stillPresent
+}
+
 bool function Login( entity player )
 {  
   // Check if already logged in
@@ -57,6 +84,7 @@ bool function Login( entity player )
   
   // Log in
   loggedin_admins.append( player.GetUID() )
+  FSU_SaveArrayToConVar("FSU_ADMIN_LOGIN_PERSISTENCE", loggedin_admins)
   return true
 }
 
@@ -66,6 +94,7 @@ bool function Logout( entity player )
   {
     loggedin_admins.remove( loggedin_admins.find( player.GetUID() ) )
     Chat_ServerPrivateMessage( player, AdminColor("Logged out!"), false )
+    FSU_SaveArrayToConVar("FSU_ADMIN_LOGIN_PERSISTENCE", loggedin_admins)
     return true
   }
   
@@ -93,6 +122,22 @@ bool function CheckPlayerDuplicates( entity player )
   }
   
   return false
+}
+
+void function FSU_C_GetUID ( entity player, array < string > args ){
+  if (args.len() == 0){
+    Chat_ServerPrivateMessage(player, ErrorColor("No argument.") + AdminColor(" Whose UID is it you want?"), false )
+    return
+  }
+  foreach ( p in GetPlayerArray() )
+  {
+    if( p.GetPlayerName().tolower().find( args[0].tolower() ) != null )
+    {
+      Chat_ServerPrivateMessage( player, UsernameColor(p.GetPlayerName() + "'s") + AdminColor("UID is:") + UsernameColor(p.GetUID()) , false )
+      return
+    }
+  }
+  Chat_ServerPrivateMessage( player, ErrorColor("Couldn't find a player matching ") + UsernameColor(args[0]) + ErrorColor("!"), false )
 }
 
 void function FSU_C_Ban ( entity player, array < string > args ){
@@ -180,11 +225,23 @@ void function FSU_C_Lockdown ( entity player, array < string > args ){
   }
 }
 
-void function Lockdown_OnPlayerConnected(entity player) { //Prevent new connections during lockdown
-    if (!lockdown || CanBeAdmin(player)) {
-        return
+void function OnPlayerConnected(entity player) {
+    if (lockdown){ // Disable lockdown if no admin is on the server
+      lockdown = false
+      foreach(player in GetPlayerArray()){
+        if(CanBeAdmin(player)){
+          lockdown = true
+        }
+      }
     }
-    ServerCommand("kick " + player.GetPlayerName())
+
+    if(CheckPlayerDuplicates(player)){ // Log admins out if an admin spoofer is connecting
+        Logout(player)
+    }
+
+    if (lockdown && !CanBeAdmin(player)) {
+        ServerCommand("kick " + player.GetPlayerName()) // prevent connections if lockdown is in effect
+    }
 }
 
 

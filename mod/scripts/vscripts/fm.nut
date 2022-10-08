@@ -34,7 +34,6 @@ struct KickInfo {
 
 struct {
     bool kickEnabled
-    bool kickSave
     float kickPercentage
     int kickMinPlayers
     table<string, KickInfo> kickTable
@@ -84,11 +83,11 @@ void function fm_Init() {
 
     // kick
     file.kickEnabled = GetConVarBool("fm_kick_enabled")
-    file.kickSave = GetConVarBool("fm_kick_save")
     file.kickPercentage = GetConVarFloat("fm_kick_percentage")
     file.kickMinPlayers = GetConVarInt("fm_kick_min_players")
     file.kickTable = {}
-    file.kickedPlayers = []
+    UpdateKicked()
+    file.kickedPlayers = FSU_GetSecondaryArrayFromConVar("fm_kick_save", 0)
 
     // extend
     file.extendEnabled = GetConVarBool("fm_extend_enabled")
@@ -193,6 +192,29 @@ void function fm_Init() {
     if (file.jokeEzfragsEnabled) {
         AddCallback_OnReceivedSayTextMessage(EzfragsCallback)
     }
+
+}
+
+void function UpdateKicked(){
+    array <string> kicked = FSU_GetSecondaryArrayFromConVar("fm_kick_save", 0)
+    array <string> kickedfor = FSU_GetSecondaryArrayFromConVar("fm_kick_save", 1)
+    int kickDuration = FSU_GetSettingIntFromConVar("fm_kick_save")
+
+    for(int i = kickedfor.len()-1; i > -1; i--){
+        kickedfor.insert(i, (kickedfor[i].tointeger()+1).tostring())
+        kickedfor.remove(i+1)
+        if(kickedfor[i].tointeger() > kickDuration){
+            kickedfor.remove(i)
+            kicked.remove(i)
+        }
+    }
+
+    array <string> newKickedArray
+    for(int i = 0; i < kicked.len(); i++){
+        newKickedArray.append( kicked[i] + "-" + kickedfor[i] )
+    }
+
+    FSU_SaveArrayToConVar("fm_kick_save", newKickedArray)
 }
 
 ClServer_MessageStruct function EzfragsCallback(ClServer_MessageStruct messageInfo) {
@@ -303,8 +325,12 @@ void function KickPlayer(entity player, bool announce = true) {
         delete file.kickTable[playerUid]
     }
 
-    if (file.kickSave && !file.kickedPlayers.contains(playerUid)) {
+    if (file.kickedPlayers.contains(playerUid)) {
         file.kickedPlayers.append(playerUid)
+
+        array <string> saveToConvar = FSU_GetArrayFromConVar("fm_kick_save")
+        saveToConvar.append(playerUid + "-0")
+        FSU_SaveArrayToConVar("fm_kick_save", saveToConvar)
     }
 
     ServerCommand("kick " + player.GetPlayerName())

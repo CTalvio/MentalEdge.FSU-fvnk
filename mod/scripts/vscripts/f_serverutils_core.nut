@@ -34,19 +34,23 @@ bool poll_show_result
 // init
 void function FSU_init ()
 {
+  // print some server deets
+//   print("[FSU] Tickinterval: " + GetConVarString("base_tickinterval_mp") + " - Updaterate:" + GetConVarString("sv_updaterate_mp") + " - Minupdaterate:" + GetConVarString("sv_minupdaterate"))
+
+
   AddCallback_OnClientConnected ( OnClientConnected )
   
   // Register commands
-  FSU_RegisterCommand( "help", AccentOne( FSU_GetString("FSU_PREFIX") + "help <page/command>") + " - list a page of commands or display the instructions for one", "core", FSU_C_Help, [ "h","usage","command","commands" ] )
-  FSU_RegisterCommand( "name", AccentOne( FSU_GetString("FSU_PREFIX") + "name") + " - returns the name of the current server", "core", FSU_C_Name,["server"] )
-  FSU_RegisterCommand( "owner", AccentOne( FSU_GetString("FSU_PREFIX") + "owner") + " - returns the name of the owner if provided", "core", FSU_C_Owner,["host"] )
+  FSU_RegisterCommand( "help", AccentOne( FSU_GetString("FSU_PREFIX") + "help <page/all/command>") + " - list a page of commands or display the instructions for one.", "core", FSU_C_Help, [ "h","usage","command","commands" ] )
+  FSU_RegisterCommand( "name", AccentOne( FSU_GetString("FSU_PREFIX") + "name") + " - returns the name of the current server.", "core", FSU_C_Name,["server"] )
+  FSU_RegisterCommand( "owner", AccentOne( FSU_GetString("FSU_PREFIX") + "owner") + " - returns the name of the owner if provided.", "core", FSU_C_Owner,["host"] )
   FSU_RegisterCommand( "mods", AccentOne( FSU_GetString("FSU_PREFIX") + "mods <page>") + " - lists mods on server. This has to be manually updated and may not be up to date!","core", FSU_C_Mods )
-  FSU_RegisterCommand( "rules", AccentOne( FSU_GetString("FSU_PREFIX") + "rules <page>") + " - lists rules", "core", FSU_C_Rules)
-  FSU_RegisterCommand( "vote", AccentOne( FSU_GetString("FSU_PREFIX") + "vote <number>") + "  - allows you to vote on polls", "core", FSU_C_Vote )
-  FSU_RegisterCommand( "discord", AccentOne( FSU_GetString("FSU_PREFIX") + "discord") + " - prints a discord invite", "core", FSU_C_Discord, [ "dc" ] )
-  FSU_RegisterCommand( "report", AccentOne( FSU_GetString("FSU_PREFIX") + "report <player>") + " - creates a report and prints it in console so you can copy it", "core", FSU_C_Report )
+  FSU_RegisterCommand( "rules", AccentOne( FSU_GetString("FSU_PREFIX") + "rules <page>") + " - lists rules.", "core", FSU_C_Rules)
+  FSU_RegisterCommand( "vote", AccentOne( FSU_GetString("FSU_PREFIX") + "vote <number>") + "  - allows you to vote on polls.", "core", FSU_C_Vote )
+  FSU_RegisterCommand( "discord", AccentOne( FSU_GetString("FSU_PREFIX") + "discord") + " - prints a discord invite.", "core", FSU_C_Discord, [ "dc" ] )
+  FSU_RegisterCommand( "report", AccentOne( FSU_GetString("FSU_PREFIX") + "report <player>") + " - creates a report and prints it in console so you can copy it.", "core", FSU_C_Report )
   if( FSU_GetBool("FSU_ENABLE_SWITCH") )
-    FSU_RegisterCommand( "switch", AccentOne( FSU_GetString("FSU_PREFIX") + "switch") + " - switches your team", "core", FSU_C_Switch )
+    FSU_RegisterCommand( "switch", AccentOne( FSU_GetString("FSU_PREFIX") + "switch") + " - switches your team.", "core", FSU_C_Switch )
   
   AddCallback_OnReceivedSayTextMessage( CheckForCommand )
   
@@ -340,7 +344,7 @@ bool function FSU_IsDedicated()
 // !help
 void function FSU_C_Help ( entity player, array < string > args )
 {
-  if(args.len() != 0 && args[0].len() > 1 ){
+  if(args.len() != 0 && args[0].len() > 1 && args[0] != "all"){
     FSU_C_Usage(player, args)
     return
   }
@@ -355,7 +359,15 @@ void function FSU_C_Help ( entity player, array < string > args )
       allowedCommands.append( cmd )
   
   
-  int pages = allowedCommands.len() % 6 == 0 ? ( allowedCommands.len() / 6 ) : ( allowedCommands.len() / 6 + 1 )
+  int pages = allowedCommands.len() % 8 == 0 ? ( allowedCommands.len() / 8 ) : ( allowedCommands.len() / 8 + 1 )
+
+  if ( args.len() != 0 && args[0] == "all" ){ // if requesting all pages, run this function multiple times
+    for(int i = 0; i < pages; i++){
+      FSU_C_Help(player, [(i+1).tostring(),0])
+    }
+    Chat_ServerPrivateMessage( player, baseTextColor + "Run " + AccentOne("!help <command>") + baseTextColor + " to see what a command is for.", false )
+    return
+  }
   
   if ( args.len() != 0 )
     page = args[0].tointeger() - 1
@@ -372,18 +384,34 @@ void function FSU_C_Help ( entity player, array < string > args )
     return
   }
   
-  
   int _index = 0
+  array <string> thisPage
   foreach ( cmd in allowedCommands )
   {
-    if ( _index >= page * 6 && _index < ( page + 1 ) * 6 )
-      returnMessage += "\n    - " + AccentOne(cmd)
-      
+    if ( _index >= page * 8 && _index < ( page + 1 ) * 8)
+      thisPage.append(cmd)
+
+    _index++
+  }
+
+  _index = 0
+  returnMessage = "\n   "
+  foreach ( cmd in thisPage ){
+    returnMessage += AccentOne(cmd)
+    if ( _index == 3 && _index != thisPage.len() - 1){
+      returnMessage += "\n   "
+    }
+    else{
+      if(_index != thisPage.len() - 1)
+        returnMessage += " - "
+    }
     _index++
   }
   
   Chat_ServerPrivateMessage( player, baseTextColor + "Commands, page " + AccentTwo("[" + ( page + 1 ) + "/" + pages + "]") + returnMessage, false )
-  Chat_ServerPrivateMessage( player, baseTextColor + "Run " + AccentOne("!help <command>") + baseTextColor + " to see what a command is for.", false )
+  if (args.len() < 2){
+    Chat_ServerPrivateMessage( player, baseTextColor + "Run " + AccentOne("!help <command>") + baseTextColor + " to see what a command is for.", false )
+  }
 }
 
 // !rules

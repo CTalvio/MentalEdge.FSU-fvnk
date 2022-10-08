@@ -25,7 +25,7 @@ struct {
 
 void function FSU_Map_init (){
     // maps
-    replayLimit = GetConVarInt("FSU_MAP_REPLAY_LIMIT")
+    replayLimit = FSU_GetSettingIntFromConVar("FSU_MAP_REPLAY_LIMIT")
     file.mapsEnabled = GetConVarBool("FSU_ENABLE_NEXTMAP")
 
     file.maps = []
@@ -52,11 +52,11 @@ void function FSU_Map_init (){
     }
 
     if ( FSU_GetBool("FSU_ENABLE_NEXTMAP") ) {
-        FSU_RegisterCommand( "nextmap", AccentOne( FSU_GetString("FSU_PREFIX") + "nextmap <map>") + " - allow players to vote for what map to play next", "map", CommandNextMap,["nm","rtv","map","maps"] )
+        FSU_RegisterCommand( "nextmap", AccentOne( FSU_GetString("FSU_PREFIX") + "nextmap <map>") + " - allow players to vote for what map to play next.", "map", CommandNextMap,["nm","rtv","map","maps"] )
     }
 
     if ( FSU_GetBool("FSU_ENABLE_SKIP") ){
-        FSU_RegisterCommand( "skip", AccentOne( FSU_GetString("FSU_PREFIX") + "skip") + " - if enough players vote, the current map will be skipped", "map", FSU_C_Skip )
+        FSU_RegisterCommand( "skip", AccentOne( FSU_GetString("FSU_PREFIX") + "skip") + " - if enough players vote, the current map will be skipped.", "map", FSU_C_Skip )
         file.skipPercentage = GetConVarFloat("FSU_MAPSKIP_FRACTION")
     }
 
@@ -77,21 +77,13 @@ void function FSU_Map_init (){
 
 void function UpdatePlayedMaps(){
     if(GetMapName() != "mp_lobby"){
-        array <string> playedMaps = split(GetConVarString("FSU_PLAYED_MAPS"), ",")
+        array <string> playedMaps = FSU_GetArrayFromConVar("FSU_MAP_REPLAY_LIMIT")
         playedMaps.append(GetMapName())
         while (playedMaps.len() > replayLimit){
-        playedMaps.remove(0)
+            playedMaps.remove(0)
         }
-        string newMaps = ""
-        foreach(string map in playedMaps){
-            if (newMaps == ""){
-                newMaps = map
-            }
-            else{
-                newMaps += "," + map
-            }
-        }
-        SetConVarString("FSU_PLAYED_MAPS", newMaps)
+
+        FSU_SaveArrayToConVar("FSU_MAP_REPLAY_LIMIT", playedMaps)
     }
 }
 
@@ -239,8 +231,8 @@ void function CommandNextMap(entity player, array<string> args) {
             string voteOnlyMaps = MapsString(file.nextMapOnlyMaps)
             Chat_ServerPrivateMessage(player, baseTextColor + "Maps by vote only:" + "\n" + AdminColor(voteOnlyMaps), false)
         }
-        if (split(GetConVarString("FSU_PLAYED_MAPS"), ",").len() > 0) {
-            string voteOnlyMaps = MapsString(split(GetConVarString("FSU_PLAYED_MAPS"), ","))
+        if (FSU_GetArrayFromConVar("FSU_MAP_REPLAY_LIMIT").len() > 0) {
+            string voteOnlyMaps = MapsString(FSU_GetArrayFromConVar("FSU_MAP_REPLAY_LIMIT"))
             Chat_ServerPrivateMessage(player, baseTextColor + "Last maps played (not vote-able):" + "\n" + ErrorColor(voteOnlyMaps), false)
         }
         Chat_ServerPrivateMessage(player, baseTextColor + "Use " + AccentOne("!nm <map>") + " to vote for the next map.", false)
@@ -272,12 +264,12 @@ void function CommandNextMap(entity player, array<string> args) {
         return
     }
 
-    if (nextMap == GetMapName() && GetConVarInt("FSU_MAP_REPLAY_LIMIT") > 0 ) {
+    if (nextMap == GetMapName() && FSU_GetSettingIntFromConVar("FSU_MAP_REPLAY_LIMIT") > 0 ) {
         Chat_ServerPrivateMessage(player, ErrorColor("You can't vote for the current map!"), false)
         return
     }
 
-    foreach(string playedMap in split(GetConVarString("FSU_PLAYED_MAPS"), ",")){
+    foreach(string playedMap in FSU_GetArrayFromConVar("FSU_MAP_REPLAY_LIMIT")){
         if (nextMap == playedMap){
             Chat_ServerPrivateMessage(player, ErrorColor("You can't vote for a recently played map!"), false)
             return
@@ -308,16 +300,32 @@ void function DoChangeMap(float waitTime) {
 
 string function GetUsualNextMap() {
     string currentMap = GetMapName()
-    bool noPlayers = GetPlayerArray().len() == 0
-    bool isLastMap = currentMap == file.maps[file.maps.len() - 1]
-    bool isUnknownMap = !file.maps.contains(currentMap)
-    if (noPlayers || isLastMap || isUnknownMap) {
-        return file.maps[0]
+
+    array <string> allowedNextMap = file.maps
+    foreach (string blockedMap in FSU_GetArrayFromConVar("FSU_MAP_REPLAY_LIMIT")){
+        if(blockedMap != currentMap){
+            if(allowedNextMap.find(blockedMap) > -1){
+                allowedNextMap.remove(allowedNextMap.find(blockedMap))
+            }
+        }
     }
 
-    string nextMap = file.maps[file.maps.find(currentMap) + 1]
+    bool noPlayers = GetPlayerArray().len() == 0
+    bool isLastMap = currentMap == allowedNextMap[file.maps.len() - 1]
+    bool isUnknownMap = !allowedNextMap.contains(currentMap)
 
-    return nextMap
+    if(GetConVarInt("FSU_MAP_RANDOM") == 1){
+        if(allowedNextMap.find(currentMap) > -1){
+            allowedNextMap.remove(allowedNextMap.find(currentMap))
+        }
+        return allowedNextMap[RandomInt(allowedNextMap.len() - 1)]
+    }
+
+    if (noPlayers || isLastMap || isUnknownMap) {
+        return allowedNextMap[0]
+    }
+
+    return allowedNextMap[allowedNextMap.find(currentMap) + 1]
 }
 
 string function DrawNextMapFromVoteTable() {

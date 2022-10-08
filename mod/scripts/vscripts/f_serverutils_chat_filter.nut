@@ -22,11 +22,35 @@ table< string, int > player_triggers
 // List of muted UIDs
 array<string> muted_players
 
-
-void function FSU_ChatFilter_init ()
-{
+void function FSU_ChatFilter_init (){
   if ( FSU_GetBool("FSU_ENABLE_SPAM_FILTER") )
     AddCallback_OnReceivedSayTextMessage( RunChatFilter )
+
+  UpdateMuted()
+  muted_players = FSU_GetSecondaryArrayFromConVar("FSU_CHAT_MUTE_SAVE", 0)
+
+}
+
+void function UpdateMuted(){
+  array <string> muted = FSU_GetSecondaryArrayFromConVar("FSU_CHAT_MUTE_SAVE", 0)
+  array <string> mutedfor = FSU_GetSecondaryArrayFromConVar("FSU_CHAT_MUTE_SAVE", 1)
+  int muteDuration = FSU_GetSettingIntFromConVar("FSU_CHAT_MUTE_SAVE")
+
+  for(int i = mutedfor.len()-1; i > -1; i--){
+    mutedfor.insert(i, (mutedfor[i].tointeger()+1).tostring())
+    mutedfor.remove(i+1)
+    if(mutedfor[i].tointeger() > muteDuration){
+      mutedfor.remove(i)
+      muted.remove(i)
+    }
+  }
+
+  array <string> newMutedArray
+  for(int i = 0; i < muted.len(); i++){
+    newMutedArray.append( muted[i] + "-" + mutedfor[i] )
+  }
+
+  FSU_SaveArrayToConVar("FSU_CHAT_MUTE_SAVE", newMutedArray)
 }
 
 
@@ -121,6 +145,10 @@ void function FSU_Mute ( string UID )
     return
   
   muted_players.append( UID )
+
+  array <string> saveToConvar = FSU_GetArrayFromConVar("FSU_CHAT_MUTE_SAVE")
+  saveToConvar.append(UID + "-0")
+  FSU_SaveArrayToConVar("FSU_CHAT_MUTE_SAVE", saveToConvar)
 }
 
 void function FSU_Unmute ( string UID )
@@ -132,6 +160,12 @@ void function FSU_Unmute ( string UID )
     player_triggers[ UID ] = 0
   
   muted_players.remove( muted_players.find( UID ) )
+
+  int toUnmuteIndex = FSU_GetSecondaryArrayFromConVar("FSU_CHAT_MUTE_SAVE", 0).find(UID)
+  array <string> saveToConvar = FSU_GetArrayFromConVar("FSU_CHAT_MUTE_SAVE")
+  saveToConvar.remove(toUnmuteIndex)
+  FSU_SaveArrayToConVar("FSU_CHAT_MUTE_SAVE", saveToConvar)
+
 }
 
 bool function FSU_IsMuted ( string UID )

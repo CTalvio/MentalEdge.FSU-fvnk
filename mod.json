@@ -1,13 +1,13 @@
 {
     "Name": "MentalEdge.FSU-fvnk",
     "Description": "A fork merging fvnkhead's server mod with FSU.",
-    "Version": "1.0.0",
+    "Version": "1.0.2",
     "LoadPriority": 7,
     "RequiredOnClient": false,
     "ConVars": [
         {
         "Name": "fsu_welcome_message_before", // The topmost line of the welcome message, the % represents the \x1b[38;5; part of 8bit ANSI escape color codes, this was changed from original FSU in order to work with setting convars in docker-compose
-        "DefaultValue": "Welcome to %31mS%113mE%32mR%36mV%34mE%35mR%15m"
+        "DefaultValue": "Welcome to this %153mSERVER"
         },
             {
         "Name": "fsu_owner", // Server owner/host
@@ -31,7 +31,7 @@
         },
             {
         "Name": "fsu_welcome_message_after", // Last line of the welcome message, displayed below rules/commands
-        "DefaultValue": "Run %113m!help <page>%15m to list available commands"
+        "DefaultValue": "Run %216m!help <page/all>%15m to list available commands"
         },
             {
         "Name": "FSU_WELCOME_ENABLE_MESSAGE_BEFORE", // Enable/disable the initial welcome message line
@@ -55,7 +55,7 @@
         },
             {
         "Name": "fsu_broadcast_message_0", // Messages to broadcast throughout matches
-        "DefaultValue": "Run %113m!help <page>%15m to list available commands"
+        "DefaultValue": "Run %113m!help <page/all>%15m to list available commands"
         },
             {
         "Name": "fsu_broadcast_message_1",
@@ -85,6 +85,10 @@
         "Name": "FSU_ADMIN_PASSWORDS", // List passwords for each UID listed above
         "DefaultValue": "123,456,789"
         },
+            {
+        "Name": "FSU_ADMIN_LOGIN_PERSISTENCE", // Enabling this allows admins to remain logged in between matches. Note that this TECNICALLY makes it possible for a spoofed admin to gain access, however theyd have to take your place during the loading screen between matches. If you simply never leave a game during it, this should not be an issue.
+        "DefaultValue": "0"
+        },
         {
         "Name": "FSU_ADMIN_REQUIRE_LOGIN_TO_CHAT", // Leaving this enable is recommended, as it prevents spoofers from impersonating you
         "DefaultValue": "1"
@@ -100,6 +104,10 @@
             {
         "Name": "FSU_CHAT_FILTER_TRIGGER_PUNISHMENT", // Currently only 'mute' is valid
         "DefaultValue": "mute"
+        },
+            {
+        "Name": "FSU_CHAT_MUTE_SAVE", // How many matches a muted player should stay muted
+        "DefaultValue": "2"
         },
             {
         "Name": "FSU_ENABLE_REPEAT_BROADCAST", // Whether to repeat broadcast messages
@@ -130,6 +138,10 @@
         "DefaultValue": "0.76"
         },
         {
+        "Name": "FSU_GETUID_ADMIN", // Whether the getuid command can be run by non-admins, requires login when set to 1
+        "DefaultValue": "1"
+        },
+        {
         "Name": "FSU_ENABLE_SKIP", // Enable map skip by vote
         "DefaultValue": "1"
         },
@@ -146,8 +158,12 @@
         "DefaultValue": "1"
         },
         {
-        "Name": "FSU_MAP_REPLAY_LIMIT", // How many matches after a map is played it can be voted for again
+        "Name": "FSU_MAP_REPLAY_LIMIT", // How many matches after a map is played it can be voted for again, has to be lower than MAP_ARRAY by at least one
         "DefaultValue": "3"
+        },
+        {
+        "Name": "FSU_MAP_RANDOM", // Enable random map rotation, uses the above convar for how many matches a map will be blocked from being picked again
+        "DefaultValue": "1"
         },
         {
         "Name": "FSU_MAP_ARRAY", // The maps you want in rotation
@@ -158,16 +174,12 @@
         "DefaultValue": "mp_complex3,mp_crashsite3,mp_rise,mp_drydock,mp_homestead"
         },
         {
-        "Name": "FSU_PLAYED_MAPS", // Leave as is, used for saving recently played maps
-        "DefaultValue": ""
-        },
-        {
             "Name": "fm_kick_enabled", // Enable kick command
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_kick_save", // Save a kicked player so they cannot rejoin
-            "DefaultValue": "1"
+            "Name": "fm_kick_save", // The number of matches a kicked player should be blocked from rejoining
+            "DefaultValue": "2"
         },
         {
             "Name": "fm_kick_percentage", // Percentage of players needed to vote for a kick
@@ -191,39 +203,39 @@
         },
         // admin commands
         {
-            "Name": "fm_yell_enabled",
+            "Name": "fm_yell_enabled", // Enable yell/announce
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_slay_enabled",
+            "Name": "fm_slay_enabled", // Enable slaying
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_freeze_enabled",
+            "Name": "fm_freeze_enabled", // Enable freezing
             "DefaultValue": "1"
         },
         {
-            "Name": "fm_stim_enabled",
+            "Name": "fm_stim_enabled", // Enable giving stim
             "DefaultValue": "0"
         },
         {
-            "Name": "fm_salvo_enabled",
+            "Name": "fm_salvo_enabled", // Enable giving salvo core
             "DefaultValue": "0"
         },
         {
-            "Name": "fm_tank_enabled",
+            "Name": "fm_tank_enabled", // Enable making tanky
             "DefaultValue": "0"
         },
         {
-            "Name": "fm_fly_enabled",
+            "Name": "fm_fly_enabled", // Enable noclip
             "DefaultValue": "0"
         },
         {
-            "Name": "fm_mrvn_enabled",
+            "Name": "fm_mrvn_enabled", // Enable spawning marvins
             "DefaultValue": "0"
         },
         {
-            "Name": "fm_grunt_enabled",
+            "Name": "fm_grunt_enabled", // Enable spawning grunts
             "DefaultValue": "0"
         },
 
