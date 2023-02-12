@@ -1,16 +1,17 @@
 # FSU-fvnk
 
+### FSU-fvnk is deprecated in favor of FSU2, and most features have been re-implemented and improved over there. As such new releases of my mods are meant for use with FSU2, rather than this fork. If you still wish to use this fork, the MentalEdge.theme component is still in the Thunderstore release of FSU-fvnk: https://northstar.thunderstore.io/package/MentalEdge/FSUfvnk/
+
 A fork merging many of the commands in fvnk's server mod into FSU, plus some extra things I did. Many similar commands merged, logical aliases set, chat messages made uniform etc.
 
 Based on the fantastic [Fifty's Server Utilities](https://northstar.thunderstore.io/package/Fifty/Server_Utilities/) by Fifty, with lots of [fvnk's server mod](https://github.com/fvnkhead/fvnkhead.mod) sprinkled in.
 
-Fully FSU compatible! This is a drop-in FSU core replacement. Compatible with my [Better Team Balancing](https://northstar.thunderstore.io/package/MentalEdge/BetterTeamBalance/) and [MentalreBalance](https://northstar.thunderstore.io/package/MentalEdge/MentalreBalance/) mods, the former of which I highly recommend to *all* server hosts.
 
 If you intend to create new FSU compatible modules, the documentation on the FSU thunderstore page still applies, as I have left the actual API for command registration completely untouched. The only addition being my chat color themeing. If you use it, MentalEdge.theme must be installed alongside any module relying on it. This enables using modules created to benefit from the color themeing, with normal FSU as well.
 
 For config, refer to the commented convars in mod.json.
 
-Note: MentalEdge.theme needs to be installed along with FSU-fvnk even if you do not intend to modify chat colors.
+Note: MentalEdge.theme needs to be installed along with FSU-fvnk even if you do not intend to modify chat colors. The MentalEdge.theme component is still included the Thunderstore release of FSUfvnk: https://northstar.thunderstore.io/package/MentalEdge/FSUfvnk/
 
 ## New in 1.0.2
 
